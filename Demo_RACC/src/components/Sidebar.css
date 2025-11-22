@@ -1,0 +1,85 @@
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+  color: white;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.sidebar-header {
+  background: linear-gradient(135deg, #f4d03f 0%, #e6c02f 100%);
+  color: #2d2d2d;
+  padding: 30px 25px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(244, 208, 63, 0.3);
+}
+
+.sidebar-header h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-header h2 {
+  margin: 5px 0 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  margin: 0;
+}
+
+.sidebar-item {
+  background: none;
+  border: none;
+  color: white;
+  padding: 18px 25px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.3s;
+  border-left: 4px solid transparent;
+  position: relative;
+  font-weight: 500;
+}
+
+.sidebar-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: rgba(244, 208, 63, 0.1);
+  transition: width 0.3s;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  padding-left: 30px;
+}
+
+.sidebar-item:hover::before {
+  width: 100%;
+}
+
+.sidebar-item.active {
+  background: linear-gradient(90deg, rgba(244, 208, 63, 0.2) 0%, transparent 100%);
+  border-left: 4px solid #f4d03f;
+  font-weight: 700;
+  color: #f4d03f;
+}

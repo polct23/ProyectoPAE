@@ -1,0 +1,7 @@
+
+.page-indicadors { padding:12px; }
+.cards-row { display:flex; gap:12px; margin-bottom:12px; }
+.filter-row { margin-bottom:12px; }
+.roads-table table { width:100%; border-collapse:collapse; background:#fff; border-radius:6px; overflow:hidden; }
+.roads-table th, .roads-table td { text-align:left; padding:10px 12px; border-bottom:1px solid #f0f0f0; }
+.roads-table thead { background:#fafafa; }

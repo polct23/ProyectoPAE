@@ -1,0 +1,5 @@
+.page-sinistralitat { padding:12px; }
+.summary-cards { display:flex; gap:12px; margin-bottom:16px; }
+.list-and-map { display:flex; gap:12px; }
+.incident-list { width:360px; background:#fff; padding:12px; border-radius:8px; }
+.map-wrapper { flex:1; height:420px; background:#f7f7f7; border-radius:8px; padding:8px; }
