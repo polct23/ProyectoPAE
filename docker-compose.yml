@@ -2,12 +2,7 @@ version: '3.8'
 
 services:
   frontend:
-    build:
-      context: ./Demo_RACC
-      dockerfile: Dockerfile
-      args:
-        REACT_APP_API_URL: "http://pa1-api.upc.edu:8000"
-    image: eetac/pae-2025-racc-frontend:latest
+    image: eetac/pae-2025-racc-frontend:0.3
     ports:
       - "80:80"
     restart: unless-stopped
@@ -15,10 +10,7 @@ services:
       - appnet
 
   backend:
-    build:
-      context: ./Backend
-      dockerfile: Dockerfile
-    image: eetac/pae-2025-racc-backend:latest
+    image: eetac/pae-2025-racc-backend:0.3
     ports:
       - "8000:8000"
     restart: unless-stopped
