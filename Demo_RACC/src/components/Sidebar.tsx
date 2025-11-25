@@ -1,5 +1,6 @@
 import React from 'react';
 import './Sidebar.css';
+import { useAuth } from '../AuthContext';
 
 interface SidebarProps {
   activeSection: string;
@@ -7,15 +8,18 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => {
-  const menuItems = [
+  const { user, logout } = useAuth();
+
+  const baseItems = [
     { id: 'inici', label: 'Inici' },
     { id: 'indicadors', label: 'Indicadors de trànsit' },
     { id: 'sinistralitat', label: 'Sinistralitat' },
     { id: 'factors', label: 'Factors externs' },
     { id: 'datasets', label: 'Datasets' },
-    { id: 'informe', label: 'Informe setmanal' },
-    { id: 'configuracio', label: 'Configuració' }
+    { id: 'informe', label: 'Informe setmanal' }
   ];
+
+  const menuItems = user ? [...baseItems, { id: 'configuracio', label: 'Configuració' }] : baseItems;
 
   return (
     <div className="sidebar">
@@ -34,6 +38,29 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
           </button>
         ))}
       </nav>
+
+      <div className="sidebar-footer" style={{ marginTop: 16, padding: '0 12px' }}>
+        {!user ? (
+          <button className="sidebar-login-btn" onClick={() => onSectionChange('login')}>
+            Login
+          </button>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 14 }}>Admin: {user}</div>
+            <button
+              onClick={async () => {
+                try {
+                  await logout();
+                } finally {
+                  onSectionChange('inici');
+                }
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

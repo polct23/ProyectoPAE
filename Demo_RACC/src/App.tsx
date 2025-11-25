@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -9,9 +8,19 @@ import Sinistralitat from './pages/Sinistralitat';
 import Factors from './pages/Factors';
 import Informe from './pages/Informe';
 import Configuracio from './pages/Configuracio';
+import Login from './pages/Login';
+import { AuthProvider, useAuth } from './AuthContext';
 
-function App() {
+function AppContent() {
   const [activeSection, setActiveSection] = useState('inici');
+  const { user } = useAuth();
+
+  // si el usuario se autentica y está en la pantalla de login, vamos a configuración
+  useEffect(() => {
+    if (user && activeSection === 'login') {
+      setActiveSection('configuracio');
+    }
+  }, [user, activeSection]);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -27,6 +36,8 @@ function App() {
         return <Informe />;
       case 'configuracio':
         return <Configuracio />;
+      case 'login':
+        return <Login />; // Login ya usa el AuthContext para cambiar estado
       case 'inici':
       default:
         return <Dashboard />;
@@ -46,6 +57,7 @@ function App() {
             {activeSection === 'datasets' && '📁 Datasets'}
             {activeSection === 'informe' && '📋 Informe setmanal'}
             {activeSection === 'configuracio' && '⚙️ Configuració'}
+            {activeSection === 'login' && '🔐 Login'}
           </h1>
           <input type="text" className="search-bar" placeholder="🔍 Cerca..." />
         </header>
@@ -55,6 +67,14 @@ function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

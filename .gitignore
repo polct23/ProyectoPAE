@@ -15,3 +15,7 @@ venv/
 .DS_Store
 .vscode/
 .idea/
+
+Backend/database.db
+Demo_RACC/node_modules/
+Demo_RACC/build/

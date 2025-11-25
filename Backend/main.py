@@ -1,10 +1,27 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional, List
+from fastapi import FastAPI, HTTPException, Depends, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlmodel import SQLModel, Field, create_engine, Session, select
+from passlib.context import CryptContext
+import os
+from dotenv import load_dotenv
 
-class DatasetMeta(BaseModel):
-    id: int
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+
+class User(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}  # <-- añade esta línea
+    id: int = Field(primary_key=True)
+    username: str
+    hashed_password: str
+
+
+
+class Dataset(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
+    id: int = Field(primary_key=True)
     title: str
     description: str
     format: str
@@ -94,10 +111,8 @@ DATASETS = [
     }
 ]
 
+app = FastAPI(title="Proyecto PAE - Backend (SQLite)")
 
-app = FastAPI(title="Demo RACC API")
-
-# Ajusta allow_origins en producción
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -106,11 +121,107 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/datasets", response_model=List[DatasetMeta])
-def get_datasets():
-    return DATASETS
+engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {})
 
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+def get_current_user(request: Request, session: Session = Depends(get_session)):
+    username = request.cookies.get("admin_user")
+    if not username:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    user = session.exec(select(User).where(User.username == username)).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuario no válido")
+    return user
+
+@app.on_event("startup")
+def on_startup():
+    SQLModel.metadata.create_all(engine)
+    # seed datasets
+    with Session(engine) as session:
+        count = session.exec(select(Dataset)).all()
+        if len(count) == 0:
+            for d in DATASETS:
+                if session.get(Dataset, d["id"]) is None:
+                    session.add(Dataset(**d))
+            session.commit()
+        # crea usuario admin si no existe
+        if not session.exec(select(User).where(User.username == "admin")).first():
+            hashed = pwd_context.hash("admin")
+            session.add(User(username="admin", hashed_password=hashed))
+            session.commit()
+
+@app.post("/login")
+def login(data: dict, response: Response, session: Session = Depends(get_session)):
+    username = data.get("username")
+    password = data.get("password")
+    user = session.exec(select(User).where(User.username == username)).first()
+    if not user or not pwd_context.verify(password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    response.set_cookie(key="admin_user", value=username, httponly=True)
+    return {"msg": "Login correcto"}
+
+@app.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(key="admin_user")
+    return {"msg": "Logout"}
+
+@app.get("/me")
+def me(request: Request, session: Session = Depends(get_session)):
+    username = request.cookies.get("admin_user")
+    return {"username": username} if username else {"username": None}
+
+# Endpoints públicos
+@app.get("/datasets", response_model=List[Dataset])
+def list_datasets(session: Session = Depends(get_session)):
+    results = session.exec(select(Dataset).order_by(Dataset.id)).all()
+    return results
+
+@app.get("/datasets/{dataset_id}", response_model=Dataset)
+def get_dataset(dataset_id: int, session: Session = Depends(get_session)):
+    ds = session.get(Dataset, dataset_id)
+    if not ds:
+        raise HTTPException(status_code=404, detail="Dataset no encontrado")
+    return ds
+
+# Endpoints protegidos (solo admin)
+@app.post("/datasets", response_model=Dataset, status_code=201)
+def create_dataset(payload: Dataset, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    if session.get(Dataset, payload.id):
+        raise HTTPException(status_code=400, detail="Dataset con ese id ya existe")
+    session.add(payload)
+    session.commit()
+    session.refresh(payload)
+    return payload
+
+@app.put("/datasets/{dataset_id}", response_model=Dataset)
+def update_dataset(dataset_id: int, payload: Dataset, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    existing = session.get(Dataset, dataset_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Dataset no encontrado")
+    for field in payload.__fields_set__:
+        setattr(existing, field, getattr(payload, field))
+    session.add(existing)
+    session.commit()
+    session.refresh(existing)
+    return existing
+
+@app.delete("/datasets/{dataset_id}", status_code=204)
+def delete_dataset(dataset_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    existing = session.get(Dataset, dataset_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Dataset no encontrado")
+    session.delete(existing)
+    session.commit()
+    return
+
+# Ejemplo de endpoint de configuración protegido
+@app.get("/configuracion")
+def configuracion(user: User = Depends(get_current_user)):
+    return {"config": "Solo admin puede ver esto"}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
