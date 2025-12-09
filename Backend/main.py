@@ -1,27 +1,43 @@
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Depends, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import SQLModel, Field, create_engine, Session, select
 from passlib.context import CryptContext
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
+import uuid
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
+
+# Security settings
+SECRET_KEY = os.getenv("SECRET_KEY", "CHANGEME_GENERATE_A_STRONG_KEY")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 class User(SQLModel, table=True):
-    __table_args__ = {"extend_existing": True}  # <-- añade esta línea
-    id: int = Field(primary_key=True)
+    __table_args__ = {"extend_existing": True}
+    id: Optional[int] = Field(default=None, primary_key=True)
     username: str
     hashed_password: str
 
-
+class RefreshToken(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
+    id: Optional[int] = Field(default=None, primary_key=True)
+    jti: str
+    user_id: int
+    expires_at: datetime
+    revoked: bool = False
 
 class Dataset(SQLModel, table=True):
     __table_args__ = {"extend_existing": True}
-    id: int = Field(primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     description: str
     format: str
@@ -110,12 +126,11 @@ DATASETS = [
       "logo": "data:image/png;base64,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"
     }
 ]
-
 app = FastAPI(title="Proyecto PAE - Backend (SQLite)")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -127,11 +142,39 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-def get_current_user(request: Request, session: Session = Depends(get_session)):
-    username = request.cookies.get("admin_user")
-    if not username:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    user = session.exec(select(User).where(User.username == username)).first()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # for FastAPI docs
+
+# Token helpers
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    now = datetime.now(timezone.utc)
+    expire = now + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire, "iat": now})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def create_refresh_token(user_id: int, expires_delta: Optional[timedelta] = None):
+    jti = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    expire = now + (expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
+    payload = {"jti": jti, "sub": str(user_id), "exp": expire, "iat": now}
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return token, jti, expire
+
+def verify_access_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = int(payload.get("sub"))
+        return user_id
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+# Dependency: validates Authorization Bearer <access_token>
+def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)):
+    if not token:
+        raise HTTPException(status_code=401, detail="No se ha proporcionado token")
+    user_id = verify_access_token(token)
+    user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no válido")
     return user
@@ -139,7 +182,6 @@ def get_current_user(request: Request, session: Session = Depends(get_session)):
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
-    # seed datasets
     with Session(engine) as session:
         count = session.exec(select(Dataset)).all()
         if len(count) == 0:
@@ -147,33 +189,88 @@ def on_startup():
                 if session.get(Dataset, d["id"]) is None:
                     session.add(Dataset(**d))
             session.commit()
-        # crea usuario admin si no existe
         if not session.exec(select(User).where(User.username == "admin")).first():
             hashed = pwd_context.hash("admin")
             session.add(User(username="admin", hashed_password=hashed))
             session.commit()
 
+# --- Auth endpoints (tokens in JSON body) ---
+
 @app.post("/login")
-def login(data: dict, response: Response, session: Session = Depends(get_session)):
+def login(data: dict, session: Session = Depends(get_session)):
     username = data.get("username")
     password = data.get("password")
     user = session.exec(select(User).where(User.username == username)).first()
     if not user or not pwd_context.verify(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
-    response.set_cookie(key="admin_user", value=username, httponly=True)
-    return {"msg": "Login correcto"}
+
+    access_token = create_access_token({"sub": str(user.id)})
+    refresh_token, jti, expires_at = create_refresh_token(user.id)
+
+    rt = RefreshToken(jti=jti, user_id=user.id, expires_at=expires_at, revoked=False)
+    session.add(rt)
+    session.commit()
+
+    # RETURN both tokens in JSON (client will store refresh token)
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer", "username": username}
+
+@app.post("/refresh")
+def refresh(data: dict, session: Session = Depends(get_session)):
+    refresh_token = data.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="No refresh token")
+    try:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        jti = payload.get("jti")
+        user_id = int(payload.get("sub"))
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Refresh token inválido")
+
+    rt = session.exec(select(RefreshToken).where(RefreshToken.jti == jti)).first()
+    if not rt or rt.revoked:
+        raise HTTPException(status_code=401, detail="Refresh token revocado o no encontrado")
+
+    expires_at = rt.expires_at
+    if expires_at.tzinfo is None or expires_at.tzinfo.utcoffset(expires_at) is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Refresh token expirado")
+
+    # rotate: revoke old and create new
+    rt.revoked = True
+    session.add(rt)
+    new_refresh_token, new_jti, new_expires_at = create_refresh_token(user_id)
+    new_rt = RefreshToken(jti=new_jti, user_id=user_id, expires_at=new_expires_at, revoked=False)
+    session.add(new_rt)
+    session.commit()
+
+    access_token = create_access_token({"sub": str(user_id)})
+    return {"access_token": access_token, "refresh_token": new_refresh_token, "token_type": "bearer"}
 
 @app.post("/logout")
-def logout(response: Response):
-    response.delete_cookie(key="admin_user")
-    return {"msg": "Logout"}
+def logout(data: dict, session: Session = Depends(get_session)):
+    refresh_token = data.get("refresh_token")
+    if refresh_token:
+        try:
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+            jti = payload.get("jti")
+            rt = session.exec(select(RefreshToken).where(RefreshToken.jti == jti)).first()
+            if rt:
+                rt.revoked = True
+                session.add(rt)
+                session.commit()
+        except JWTError:
+            pass
+    return {"msg": "Logged out"}
 
 @app.get("/me")
-def me(request: Request, session: Session = Depends(get_session)):
-    username = request.cookies.get("admin_user")
-    return {"username": username} if username else {"username": None}
+def me(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)):
+    user_id = verify_access_token(token)
+    user = session.get(User, user_id)
+    return {"username": user.username}
 
-# Endpoints públicos
+# --- Public endpoints ---
 @app.get("/datasets", response_model=List[Dataset])
 def list_datasets(session: Session = Depends(get_session)):
     results = session.exec(select(Dataset).order_by(Dataset.id)).all()
@@ -186,7 +283,7 @@ def get_dataset(dataset_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Dataset no encontrado")
     return ds
 
-# Endpoints protegidos (solo admin)
+# --- Protected endpoints ---
 @app.post("/datasets", response_model=Dataset, status_code=201)
 def create_dataset(payload: Dataset, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     if session.get(Dataset, payload.id):
@@ -217,7 +314,6 @@ def delete_dataset(dataset_id: int, user: User = Depends(get_current_user), sess
     session.commit()
     return
 
-# Ejemplo de endpoint de configuración protegido
 @app.get("/configuracion")
 def configuracion(user: User = Depends(get_current_user)):
     return {"config": "Solo admin puede ver esto"}
