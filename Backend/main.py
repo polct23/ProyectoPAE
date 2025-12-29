@@ -9,6 +9,10 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 import uuid
+import requests
+from lxml import etree
+from io import StringIO
+from analizar_dataset_1 import extraer_incidencias
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
@@ -317,6 +321,169 @@ def delete_dataset(dataset_id: int, user: User = Depends(get_current_user), sess
 @app.get("/configuracion")
 def configuracion(user: User = Depends(get_current_user)):
     return {"config": "Solo admin puede ver esto"}
+
+# ==================== FUNCIONES XML TO TXT ====================
+
+def descargar_xml(url: str) -> str:
+    """Descarga un archivo XML de una URL"""
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.text
+    except requests.RequestException as e:
+        raise HTTPException(status_code=400, detail=f"Error descargando XML: {str(e)}")
+
+def xml_to_txt(xml_content: str) -> str:
+    """Convierte contenido XML a formato TXT legible"""
+    try:
+        # Parsear el XML
+        root = etree.fromstring(xml_content.encode('utf-8'))
+        
+        output = StringIO()
+        output.write("=" * 80 + "\n")
+        output.write("CONTENIDO XML CONVERTIDO A TXT\n")
+        output.write("=" * 80 + "\n\n")
+        
+        # Procesar recursivamente los elementos
+        def procesar_elemento(elemento, nivel=0):
+            indentacion = "  " * nivel
+            
+            # Escribir nombre del elemento
+            output.write(f"{indentacion}[{elemento.tag}]\n")
+            
+            # Escribir atributos si existen
+            if elemento.attrib:
+                for attr_name, attr_value in elemento.attrib.items():
+                    output.write(f"{indentacion}  @{attr_name}: {attr_value}\n")
+            
+            # Escribir texto del elemento
+            if elemento.text and elemento.text.strip():
+                output.write(f"{indentacion}  > {elemento.text.strip()}\n")
+            
+            # Procesar elementos hijos
+            for hijo in elemento:
+                procesar_elemento(hijo, nivel + 1)
+                # Escribir texto de cola (tail) si existe
+                if hijo.tail and hijo.tail.strip():
+                    output.write(f"{indentacion}  {hijo.tail.strip()}\n")
+        
+        procesar_elemento(root)
+        output.write("\n" + "=" * 80 + "\n")
+        
+        return output.getvalue()
+    except etree.XMLSyntaxError as e:
+        raise HTTPException(status_code=400, detail=f"Error parseando XML: {str(e)}")
+# ==================== ANÁLISIS DATASET 1 ====================
+
+def _build_stats(incidencias: List[dict]) -> dict:
+    """Construye estadísticas a partir de incidencias"""
+    def top10(d: dict):
+        return sorted(d.items(), key=lambda x: x[1], reverse=True)[:10]
+
+    tipos, causas, carreteras, niveles = {}, {}, {}, {}
+    for inc in incidencias:
+        tipos[str(inc.get('tipus', 'desconegut'))] = tipos.get(str(inc.get('tipus', 'desconegut')), 0) + 1
+        causas[str(inc.get('causa', 'desconeguda'))] = causas.get(str(inc.get('causa', 'desconeguda')), 0) + 1
+        carreteras[str(inc.get('carretera', 'desconeguda'))] = carreteras.get(str(inc.get('carretera', 'desconeguda')), 0) + 1
+        niveles[str(inc.get('nivell', 'desconegut'))] = niveles.get(str(inc.get('nivell', 'desconegut')), 0) + 1
+
+    return {
+        "total": len(incidencias),
+        "byType": tipos,
+        "byCauseTop": top10(causas),
+        "byRoadTop": top10(carreteras),
+        "bySeverity": niveles,
+        "sample": incidencias[0] if incidencias else None,
+    }
+
+@app.get("/datasets/{dataset_id}/analyze-xml")
+def analyze_dataset_xml(dataset_id: int, user: User = Depends(get_current_user)):
+    """
+    Analiza el XML del dataset 1 (SCT Incidències) extrayendo estadísticas
+    """
+    dataset = next((d for d in DATASETS if d["id"] == dataset_id), None)
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset no encontrado")
+    if dataset_id != 1:
+        raise HTTPException(status_code=400, detail="Análisis disponible sólo para el dataset 1")
+    if dataset.get("format") != "XML":
+        raise HTTPException(status_code=400, detail="Este dataset no es de formato XML")
+
+    xml_content = descargar_xml(dataset["link"])
+    try:
+        incidencias = extraer_incidencias(xml_content)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error extrayendo incidencias: {str(e)}")
+    
+    stats = _build_stats(incidencias)
+
+    return {
+        "dataset_id": dataset_id,
+        "dataset_title": dataset["title"],
+        "total_chars": len(xml_content),
+        "stats": stats,
+        "incidences": incidencias[:50],
+    }
+
+@app.get("/datasets/{dataset_id}/xml-to-txt")
+def convertir_dataset_xml_a_txt(dataset_id: int, user: User = Depends(get_current_user)):
+    """
+    Descarga el XML de un dataset y lo convierte a TXT
+    """
+    # Buscar el dataset
+    dataset = None
+    for ds in DATASETS:
+        if ds["id"] == dataset_id:
+            dataset = ds
+            break
+    
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset no encontrado")
+    
+    # Verificar que sea XML
+    if dataset.get("format") != "XML":
+        raise HTTPException(status_code=400, detail="Este dataset no es de formato XML")
+    
+    # Descargar el XML
+    xml_content = descargar_xml(dataset["link"])
+    
+    # Convertir a TXT
+    txt_content = xml_to_txt(xml_content)
+    
+    return {
+        "dataset_id": dataset_id,
+        "dataset_title": dataset["title"],
+        "content": txt_content,
+        "tamanio": len(txt_content),
+        "caracteres": len(xml_content)
+    }
+
+@app.get("/datasets/{dataset_id}/xml-download")
+def descargar_xml_dataset(dataset_id: int, user: User = Depends(get_current_user)):
+    """
+    Descarga el XML raw de un dataset
+    """
+    # Buscar el dataset
+    dataset = None
+    for ds in DATASETS:
+        if ds["id"] == dataset_id:
+            dataset = ds
+            break
+    
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset no encontrado")
+    
+    if dataset.get("format") != "XML":
+        raise HTTPException(status_code=400, detail="Este dataset no es de formato XML")
+    
+    # Descargar el XML
+    xml_content = descargar_xml(dataset["link"])
+    
+    return Response(
+        content=xml_content,
+        media_type="application/xml",
+        headers={"Content-Disposition": f"attachment; filename={dataset['title']}.xml"}
+    )
 
 if __name__ == "__main__":
     import uvicorn
