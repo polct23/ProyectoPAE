@@ -10,6 +10,7 @@ import Informe from './pages/Informe';
 import Configuracio from './pages/Configuracio';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './AuthContext';
+import { ChatbotWidget } from './components/ChatbotWidget';
 
 function AppContent() {
   const [activeSection, setActiveSection] = useState('inici');
@@ -65,6 +66,7 @@ function AppContent() {
         <div className="content-area">
           {renderContent()}
         </div>
+        <ChatbotWidget /> 
       </div>
     </div>
   );

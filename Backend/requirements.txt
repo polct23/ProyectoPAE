@@ -6,4 +6,4 @@ passlib
 python-jose[cryptography]
 requests
 lxml
-xml2txt
+# xml2txt

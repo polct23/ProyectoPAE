@@ -13,7 +13,16 @@ import requests
 from lxml import etree
 from io import StringIO
 from analizar_dataset_1 import extraer_incidencias
+import openai
+import os
 
+
+app = FastAPI()
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+HF_ENDPOINT = "https://api-inference.huggingface.co/models/gpt2"
+
+
+    
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
 
@@ -321,6 +330,36 @@ def delete_dataset(dataset_id: int, user: User = Depends(get_current_user), sess
 @app.get("/configuracion")
 def configuracion(user: User = Depends(get_current_user)):
     return {"config": "Solo admin puede ver esto"}
+
+@app.post("/chatbot/ask")
+async def chatbot_ask(data: dict):
+    context = data.get("context", "")
+    question = data.get("question", "")
+    if not context or not question:
+        raise HTTPException(status_code=400, detail="Faltan datos")
+    prompt = f"Contesta a la siguiente pregunta usando solo la información de estos documentos:\n{context}\n\nPregunta: {question}\nRespuesta:"
+    headers = {
+        "Authorization": f"Bearer {HF_API_TOKEN}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    payload = { "inputs": prompt }
+    try:
+        response = requests.post(HF_ENDPOINT, headers=headers, json=payload, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        # El formato puede variar según el modelo
+        if isinstance(data, list):
+            answer = data[0].get("generated_text", "Sin respuesta")
+        elif isinstance(data, dict) and "generated_text" in data:
+            answer = data["generated_text"]
+        elif "error" in data:
+            answer = f"Error: {data['error']}"
+        else:
+            answer = str(data)
+        return { "answer": answer }
+    except Exception as e:
+        return { "error": str(e) }
 
 # ==================== FUNCIONES XML TO TXT ====================
 

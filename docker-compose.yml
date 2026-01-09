@@ -2,7 +2,11 @@ version: '3.8'
 
 services:
   frontend:
-    image: eetac/pae-2025-racc-frontend:0.3
+    build:
+      context: ./Demo_RACC
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://127.0.0.1:8000}
+    image: eetac/pae-2025-racc-frontend:latest
     ports:
       - "80:80"
     restart: unless-stopped
@@ -10,13 +14,26 @@ services:
       - appnet
 
   backend:
-    image: eetac/pae-2025-racc-backend:0.3
+    build:
+      context: ./Backend
+    image: eetac/pae-2025-racc-backend:latest
+    env_file:
+      - ./Backend/.env
+    environment:
+      # Forzar la ruta dentro del contenedor; el archivo sqlite se almacenará en el volumen nombrado
+      - DATABASE_URL=sqlite:////data/database.db
     ports:
       - "8000:8000"
     restart: unless-stopped
     networks:
       - appnet
+    volumes:
+      - pae_backend_db:/app/data
 
 networks:
   appnet:
     driver: bridge
+
+volumes:
+  pae_backend_db:
+    driver: local

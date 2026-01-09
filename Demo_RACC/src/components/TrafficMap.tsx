@@ -1,6 +1,5 @@
-// ...existing code...
 import React from 'react';
-import { MapContainer, TileLayer, Circle, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Circle, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import './TrafficMap.css';
 
@@ -19,9 +18,16 @@ type ExternalMarker = {
   type?: 'retention' | 'accident' | 'closure';
 };
 
+type Route = {
+  path: { lat: number; lng: number }[];
+  color?: string;
+  label?: string;
+};
+
 type TrafficMapProps = {
   markers?: ExternalMarker[];
   height?: number | string;
+  routes?: Route[];
 };
 
 const defaultIncidents: TrafficIncident[] = [
@@ -41,8 +47,7 @@ const getIncidentColor = (type: string) => {
   }
 };
 
-const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%' }) => {
-  // Si se pasan markers por props, los usamos; si no, mostramos los incidentes por defecto
+const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', routes }) => {
   const items: TrafficIncident[] = (markers && markers.length)
     ? markers.map((m, i) => ({
         id: 1000 + i,
@@ -83,10 +88,17 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%' }) => 
             </Popup>
           </Circle>
         ))}
+        {/* Dibuja las rutas si existen */}
+        {routes && routes.map((route, idx) => (
+          <Polyline
+            key={idx}
+            positions={route.path.map(p => [p.lat, p.lng])}
+            pathOptions={{ color: route.color || 'red', weight: 6 }}
+          />
+        ))}
       </MapContainer>
     </div>
   );
 };
 
 export default TrafficMap;
-// ...existing code...
