@@ -12,9 +12,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
 
   const baseItems = [
     { id: 'inici', label: 'Inici' },
-    { id: 'indicadors', label: 'Indicadors de trànsit' },
     { id: 'sinistralitat', label: 'Sinistralitat' },
-    { id: 'factors', label: 'Factors externs' },
     { id: 'datasets', label: 'Datasets' },
     { id: 'informe', label: 'Informe setmanal' }
   ];

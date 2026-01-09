@@ -13,7 +13,7 @@ import requests
 from lxml import etree
 from io import StringIO
 from analizar_dataset_1 import extraer_incidencias
-import openai
+from datasets import extraer_coordenadas_xml, extraer_coordenadas_con_detalles
 import os
 
 
@@ -330,6 +330,18 @@ def delete_dataset(dataset_id: int, user: User = Depends(get_current_user), sess
 @app.get("/configuracion")
 def configuracion(user: User = Depends(get_current_user)):
     return {"config": "Solo admin puede ver esto"}
+
+@app.get("/coordenadas")
+def obtener_coordenadas():
+    """Endpoint público que obtiene coordenadas en tiempo real del XML de incidencias"""
+    coordenadas = extraer_coordenadas_xml()
+    return {"coordenadas": coordenadas, "total": len(coordenadas)}
+
+@app.get("/incidencias")
+def obtener_incidencias():
+    """Endpoint público que obtiene incidencias con detalles del XML"""
+    incidencias = extraer_coordenadas_con_detalles()
+    return {"incidencias": incidencias, "total": len(incidencias)}
 
 @app.post("/chatbot/ask")
 async def chatbot_ask(data: dict):

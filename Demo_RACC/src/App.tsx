@@ -51,7 +51,7 @@ function AppContent() {
       <div className="main-content">
         <header className="app-header">
           <h1 className="page-title">
-            {activeSection === 'inici' && '🏠 Dashboard'}
+            {activeSection === 'inici' && '🗺️ Mapa de tràfic'}
             {activeSection === 'indicadors' && '📊 Indicadors de trànsit'}
             {activeSection === 'sinistralitat' && '🚨 Sinistralitat'}
             {activeSection === 'factors' && '🌤️ Factors externs'}
@@ -60,7 +60,6 @@ function AppContent() {
             {activeSection === 'configuracio' && '⚙️ Configuració'}
             {activeSection === 'login' && '🔐 Login'}
           </h1>
-          <input type="text" className="search-bar" placeholder="🔍 Cerca..." />
         </header>
 
         <div className="content-area">

@@ -46,37 +46,22 @@ const Dashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="dashboard-page">
-      <div className="metrics-grid">
-        <MetricCard title="RETENCIONS" value="132" color="red" />
-        <MetricCard title="ACCIDENTS" value="8" color="red" />
-        <MetricCard title="TEMPS RETENCIONS" value="178 Min" color="red" />
-        <MetricCard title="CARRERS TALLATS" value="14" color="red" />
-      </div>
-
-      <div className="map-section">
-        {/* Mapa general de Barcelona con marcadors per a la vista d'inici */}
-        <TrafficMap
-          markers={DEFAULT_MARKERS}
-          height={480}
-          routes={
-            incidentRoute.length > 1
-              ? [
-                  {
-                    path: incidentRoute,
-                    color: 'red',
-                    label: 'Retenció N-II',
-                  },
-                ]
-              : []
-          }
-        />
-      </div>
-
-      <div className="charts-grid">
-        <TrendChart />
-        <WeeklyChart />
-      </div>
+    <div className="dashboard-page" style={{ height: 'calc(100vh - 60px)', padding: 0 }}>
+      <TrafficMap
+        markers={DEFAULT_MARKERS}
+        height="100%"
+        routes={
+          incidentRoute.length > 1
+            ? [
+                {
+                  path: incidentRoute,
+                  color: 'red',
+                  label: 'Retenció N-II',
+                },
+              ]
+            : []
+        }
+      />
     </div>
   );
 };

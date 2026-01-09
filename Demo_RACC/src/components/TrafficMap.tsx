@@ -1,7 +1,52 @@
-import React from 'react';
-import { MapContainer, TileLayer, Circle, Popup, Polyline } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Circle, Popup, Polyline, Marker } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './TrafficMap.css';
+
+// Iconos personalizados para cada tipo de incidencia
+const iconHielo = L.icon({
+  iconUrl: '/hielo.png', 
+  iconSize: [40, 40], 
+  iconAnchor: [20, 40], 
+  popupAnchor: [0, -40], 
+});
+
+const iconNevada = L.icon({
+  iconUrl: '/nevada.png', 
+  iconSize: [40, 40], 
+  iconAnchor: [20, 40], 
+  popupAnchor: [0, -40], 
+});
+
+const iconObra = L.icon({
+  iconUrl: '/obra.png', 
+  iconSize: [40, 40], 
+  iconAnchor: [20, 40], 
+  popupAnchor: [0, -40], 
+});
+
+const iconOtros = L.icon({
+  iconUrl: '/otros.png', 
+  iconSize: [40, 40], 
+  iconAnchor: [20, 40], 
+  popupAnchor: [0, -40], 
+});
+
+// Función para determinar qué icono usar según la descripción
+const getIconForIncident = (description: string): L.Icon => {
+  const desc = description.toLowerCase();
+  
+  if (desc.includes('neu/gel')) {
+    return iconHielo;
+  } else if (desc.includes('obligatori cadenes')) {
+    return iconNevada;
+  } else if (desc.includes('calçada')) {
+    return iconObra;
+  } else {
+    return iconOtros;
+  }
+};
 
 interface TrafficIncident {
   id: number;
@@ -9,6 +54,14 @@ interface TrafficIncident {
   lng: number;
   type: 'retention' | 'accident' | 'closure';
   description: string;
+  causa?: string;
+  carretera?: string;
+  pk_inici?: string;
+  pk_fi?: string;
+  sentit?: string;
+  cap_a?: string;
+  data?: string;
+  tipo?: string;
 }
 
 type ExternalMarker = {
@@ -48,23 +101,80 @@ const getIncidentColor = (type: string) => {
 };
 
 const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', routes }) => {
-  const items: TrafficIncident[] = (markers && markers.length)
-    ? markers.map((m, i) => ({
-        id: 1000 + i,
-        lat: m.lat,
-        lng: m.lng,
-        type: m.type ?? 'retention',
-        description: m.label ?? 'Incidencia'
-      }))
-    : defaultIncidents;
+  const [liveIncidents, setLiveIncidents] = useState<TrafficIncident[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Función para obtener coordenadas del backend
+  const fetchIncidents = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:8000/incidencias');
+      const data = await response.json();
+      
+      console.log('📍 Datos recibidos del backend:', data);
+      console.log('📍 Total incidencias:', data.incidencias?.length);
+      
+      const incidents: TrafficIncident[] = data.incidencias.map((inc: any, idx: number) => ({
+        id: idx + 1,
+        lat: inc.lat,
+        lng: inc.lon,
+        type: (inc.tipo?.toLowerCase().includes('retenció') ? 'retention' : 
+               inc.tipo?.toLowerCase().includes('accident') ? 'accident' : 'closure') as 'retention' | 'accident' | 'closure',
+        description: inc.descripcion || inc.carretera || 'Incidencia',
+        causa: inc.causa,
+        carretera: inc.carretera,
+        pk_inici: inc.pk_inici,
+        pk_fi: inc.pk_fi,
+        sentit: inc.sentit,
+        cap_a: inc.cap_a,
+        data: inc.data,
+        tipo: inc.tipo
+      }));
+      
+      console.log('📍 Incidencias procesadas:', incidents);
+      console.log('📍 Primera incidencia:', incidents[0]);
+      
+      setLiveIncidents(incidents);
+    } catch (error) {
+      console.error('❌ Error al obtener incidencias:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar incidencias al montar el componente
+  useEffect(() => {
+    fetchIncidents();
+  }, []);
+
+  const items: TrafficIncident[] = liveIncidents.length > 0
+    ? liveIncidents
+    : (markers && markers.length)
+      ? markers.map((m, i) => ({
+          id: 1000 + i,
+          lat: m.lat,
+          lng: m.lng,
+          type: m.type ?? 'retention',
+          description: m.label ?? 'Incidencia'
+        }))
+      : defaultIncidents;
+
+  console.log('🗺️ liveIncidents.length:', liveIncidents.length);
+  console.log('🗺️ Items a mostrar en el mapa:', items);
+  console.log('🗺️ Total items:', items.length);
 
   const styleHeight = typeof height === 'number' ? `${height}px` : height;
+
+  // Calcular el centro del mapa basado en las incidencias
+  const mapCenter: [number, number] = items.length > 0 && items !== defaultIncidents
+    ? [items[0].lat, items[0].lng]
+    : [41.3851, 2.1734];
 
   return (
     <div className="traffic-map-container" style={{ height: styleHeight }}>
       <MapContainer
-        center={[41.3851, 2.1734]}
-        zoom={13}
+        center={mapCenter}
+        zoom={8}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
@@ -72,21 +182,67 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {items.map(incident => (
-          <Circle
-            key={incident.id}
-            center={[incident.lat, incident.lng]}
-            radius={200}
-            pathOptions={{
-              color: getIncidentColor(incident.type),
-              fillColor: getIncidentColor(incident.type),
-              fillOpacity: 0.45
-            }}
-          >
-            <Popup>
-              <strong>{incident.description}</strong>
-              <div>Tipo: {incident.type}</div>
-            </Popup>
-          </Circle>
+          <React.Fragment key={incident.id}>
+            <Marker position={[incident.lat, incident.lng]} icon={getIconForIncident(incident.description)}>
+              <Popup>
+                <div style={{ maxWidth: '250px', fontSize: '12px' }}>
+                  <strong style={{ fontSize: '14px', display: 'block', marginBottom: '8px' }}>
+                    {incident.description}
+                  </strong>
+                  
+                  {incident.causa && (
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>🔧 Causa:</strong> {incident.causa}
+                    </div>
+                  )}
+                  
+                  {incident.carretera && (
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>🛣️ Carretera:</strong> {incident.carretera}
+                      {incident.pk_inici && incident.pk_fi && ` (PK ${incident.pk_inici} - ${incident.pk_fi})`}
+                    </div>
+                  )}
+                  
+                  {incident.sentit && (
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>🔀 Sentit:</strong> {incident.sentit}
+                    </div>
+                  )}
+                  
+                  {incident.cap_a && (
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>➡️ Cap a:</strong> {incident.cap_a}
+                    </div>
+                  )}
+                  
+                  {incident.data && (
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>📅 Des de:</strong> {new Date(incident.data).toLocaleString('ca-ES')}
+                    </div>
+                  )}
+                  
+                  {incident.tipo && (
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>⚠️ Tipus:</strong> {incident.tipo}
+                    </div>
+                  )}
+                  
+                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #ddd', fontSize: '11px', color: '#666' }}>
+                    <strong>📍 Coordenades:</strong> {incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+            <Circle
+              center={[incident.lat, incident.lng]}
+              radius={200}
+              pathOptions={{
+                color: getIncidentColor(incident.type),
+                fillColor: getIncidentColor(incident.type),
+                fillOpacity: 0.35
+              }}
+            />
+          </React.Fragment>
         ))}
         {/* Dibuja las rutas si existen */}
         {routes && routes.map((route, idx) => (
