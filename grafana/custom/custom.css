@@ -1,0 +1,11 @@
+/* Reemplazar logo de Grafana */
+.navbar .navbar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.navbar .navbar-brand img {
+    content: url('/public/img/movere_logo.png'); /* Reemplaza logo */
+    width: 120px; /* Ajusta según el tamaño del logo */
+    height: auto;
+}

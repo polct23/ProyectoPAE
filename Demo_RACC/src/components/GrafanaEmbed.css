@@ -1,0 +1,18 @@
+.grafana-embed-container {
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.grafana-embed-container h2 {
+  margin: 0;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+
+.grafana-iframe {
+  display: block;
+  border: none;
+}

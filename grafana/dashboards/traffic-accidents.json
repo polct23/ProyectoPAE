@@ -1,0 +1,441 @@
+{
+  "id": null,
+  "uid": "traffic-accidents",
+  "title": "Accidentes de Tráfico - AMB Barcelona",
+  "tags": ["traffic", "accidents", "barcelona"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "description": "Dashboard en tiempo real de accidentes y siniestralidad vial en Barcelona y Área Metropolitana",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "� Retenciones Activas",
+      "description": "Retenciones de tráfico activas en tiempo real",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/accidents/today-count",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#10b981"
+              },
+              {
+                "value": 3,
+                "color": "#f59e0b"
+              },
+              {
+                "value": 8,
+                "color": "#ef4444"
+              }
+            ]
+          },
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "⚠️ Total de Incidencias Activas",
+      "description": "Suma de accidentes, retenciones y obras en progreso",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/incidents/total",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#3b82f6"
+              },
+              {
+                "value": 50,
+                "color": "#f59e0b"
+              },
+              {
+                "value": 100,
+                "color": "#ef4444"
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "📊 Accidentes Clasificados por Tipo",
+      "description": "Distribución de accidentes por categoría (choque, atropello, etc)",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/accidents/by-type",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "tipo",
+              "text": "Tipo",
+              "type": "string"
+            },
+            {
+              "selector": "cantidad",
+              "text": "Cantidad",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "barWidth": 0.75,
+        "groupWidth": 0.85,
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value"]
+        },
+        "xTickLabel": {
+          "angle": 45
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "type": "piechart",
+      "title": "🎯 Distribución de Accidentes por Severidad",
+      "description": "Porcentaje de accidentes según su nivel de gravedad",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/accidents/by-severity",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "nivel",
+              "text": "Nivel",
+              "type": "string"
+            },
+            {
+              "selector": "cantidad",
+              "text": "Cantidad",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "percent"],
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "values": ["value", "percent"]
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      }
+    },
+    {
+      "type": "table",
+      "title": "🛣️ Carreteras con Mayor Número de Accidentes",
+      "description": "Ranking de vías más afectadas por siniestros",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/accidents/by-road",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "carretera",
+              "text": "Carretera",
+              "type": "string"
+            },
+            {
+              "selector": "cantidad",
+              "text": "Accidentes",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [],
+        "displayMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Accidentes"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#90ee90",
+                      "value": null
+                    },
+                    {
+                      "color": "#ffd700",
+                      "value": 3
+                    },
+                    {
+                      "color": "#ff6b6b",
+                      "value": 7
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      }
+    },
+    {
+      "type": "table",
+      "title": "⚡ Causas Principales de Incidencias",
+      "description": "Factores más comunes que generan incidencias de tránsito",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/incidents/by-cause",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "causa",
+              "text": "Causa",
+              "type": "string"
+            },
+            {
+              "selector": "cantidad",
+              "text": "Cantidad",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [],
+        "displayMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cantidad"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#90ee90",
+                      "value": null
+                    },
+                    {
+                      "color": "#ffd700",
+                      "value": 5
+                    },
+                    {
+                      "color": "#ff6b6b",
+                      "value": 10
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      }
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {}
+}
