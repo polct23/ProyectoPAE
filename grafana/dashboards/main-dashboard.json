@@ -1,0 +1,389 @@
+{
+  "id": null,
+  "uid": "main-dashboard",
+  "title": "Dashboard Principal - AMB Barcelona",
+  "tags": ["traffic", "main", "barcelona"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "description": "Vista general de tráfico e incidencias en Barcelona y Área Metropolitana",
+  "panels": [
+    {
+      "type": "stat",
+      "id": 1,
+      "title": "🚦 Total Incidències",
+      "description": "Total de incidencias activas en toda Cataluña",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/incidents/total",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "total_incidencias",
+              "text": "Total",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#10b981"
+              },
+              {
+                "value": 80,
+                "color": "#f59e0b"
+              },
+              {
+                "value": 150,
+                "color": "#ef4444"
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "id": 2,
+      "title": "🚗 Retencions",
+      "description": "Retenciones de tráfico activas",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/dashboard/kpi-summary",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "retenciones",
+              "text": "Retenciones",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#10b981"
+              },
+              {
+                "value": 30,
+                "color": "#f59e0b"
+              },
+              {
+                "value": 60,
+                "color": "#ef4444"
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "id": 3,
+      "title": "⏱️ Temps Mitjà Retencions",
+      "description": "Tiempo promedio de retenciones en minutos",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/dashboard/kpi-summary",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "tiempo_retenciones_min",
+              "text": "Minutos",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#10b981"
+              },
+              {
+                "value": 60,
+                "color": "#f59e0b"
+              },
+              {
+                "value": 120,
+                "color": "#ef4444"
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "id": 4,
+      "title": "🚧 Carrers Tallats",
+      "description": "Calles cortadas o con incidencias graves (nivel >= 4)",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/dashboard/kpi-summary",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "carrers_tallats",
+              "text": "Carrers",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#10b981"
+              },
+              {
+                "value": 10,
+                "color": "#f59e0b"
+              },
+              {
+                "value": 20,
+                "color": "#ef4444"
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      }
+    },
+    {
+      "type": "barchart",
+      "id": 6,
+      "title": "📊 Incidents per Dia de la Setmana",
+      "description": "Distribución de incidencias por día de la semana",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/dashboard/incidents-by-weekday",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Dia",
+              "type": "string"
+            },
+            {
+              "selector": "value",
+              "text": "Incidencias",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "orientation": "vertical",
+        "barWidth": 0.75,
+        "groupWidth": 0.85,
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "type": "table",
+      "id": 7,
+      "title": "🛑 Carrers Tallats / Incidents Graus (Nivell >= 4)",
+      "description": "Calles cortadas o con incidencias graves",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/dashboard/streets-closed",
+          "url_options": {
+            "method": "GET"
+          },
+          "format": "table",
+          "root_selector": "calles_cortadas",
+          "columns": [
+            {
+              "selector": "carretera",
+              "text": "Carretera",
+              "type": "string"
+            },
+            {
+              "selector": "descripcion",
+              "text": "Descripción",
+              "type": "string"
+            },
+            {
+              "selector": "tipo",
+              "text": "Tipo",
+              "type": "string"
+            },
+            {
+              "selector": "causa",
+              "text": "Causa",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      }
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {}
+}

@@ -1,12 +1,9 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: ./Demo_RACC
-      args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://127.0.0.1:8000}
-    image: eetac/pae-2025-racc-frontend:latest
+      dockerfile: Dockerfile
+    container_name: frontend
     ports:
       - "80:80"
     restart: unless-stopped
@@ -16,24 +13,47 @@ services:
   backend:
     build:
       context: ./Backend
-    image: eetac/pae-2025-racc-backend:latest
-    env_file:
-      - ./Backend/.env
-    environment:
-      # Forzar la ruta dentro del contenedor; el archivo sqlite se almacenará en el volumen nombrado
-      - DATABASE_URL=sqlite:////data/database.db
+      dockerfile: Dockerfile
+    container_name: backend
     ports:
       - "8000:8000"
     restart: unless-stopped
+    env_file:
+      - ./Backend/.env
     networks:
       - appnet
+    
+  grafana:
+    build:
+      context: ./grafana
+      dockerfile: Dockerfile
+    container_name: grafana
+    ports:
+      - "3001:3000"
     volumes:
-      - pae_backend_db:/app/data
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    working_dir: /usr/share/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_SECURITY_ALLOW_EMBED_INITIATE_LOGIN=true
+    networks:
+      - appnet
+    restart: unless-stopped
 
 networks:
   appnet:
     driver: bridge
 
 volumes:
+  grafana_data:
+    driver: local
   pae_backend_db:
     driver: local
