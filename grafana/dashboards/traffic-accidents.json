@@ -1,7 +1,7 @@
 {
   "id": null,
   "uid": "traffic-accidents",
-  "title": "Accidentes de Tráfico - AMB Barcelona",
+  "title": "Incidents de Tràfic - AMB Barcelona",
   "tags": ["traffic", "accidents", "barcelona"],
   "timezone": "browser",
   "editable": true,
@@ -10,8 +10,9 @@
   "panels": [
     {
       "type": "stat",
-      "title": "� Retenciones Activas",
-      "description": "Retenciones de tráfico activas en tiempo real",
+      "id": 1,
+      "title": "🚗 Retencions Actives",
+      "description": "Retencions de tràfic actives en temps real",
       "datasource": "PAE Backend",
       "targets": [
         {
@@ -74,8 +75,9 @@
     },
     {
       "type": "stat",
-      "title": "⚠️ Total de Incidencias Activas",
-      "description": "Suma de accidentes, retenciones y obras en progreso",
+      "id": 2,
+      "title": "⚠️ Total de Incidències Actives",
+      "description": "Suma d'accidents, retencions i obres en curs",
       "datasource": "PAE Backend",
       "targets": [
         {
@@ -130,8 +132,9 @@
     },
     {
       "type": "barchart",
-      "title": "📊 Accidentes Clasificados por Tipo",
-      "description": "Distribución de accidentes por categoría (choque, atropello, etc)",
+      "id": 3,
+      "title": "📊 Accidents Classificats per Tipus",
+      "description": "Distribució d'accidents per categoria (xoc, atropellament, etc)",
       "datasource": "PAE Backend",
       "targets": [
         {
@@ -195,8 +198,9 @@
     },
     {
       "type": "piechart",
-      "title": "🎯 Distribución de Accidentes por Severidad",
-      "description": "Porcentaje de accidentes según su nivel de gravedad",
+      "id": 4,
+      "title": "🎯 Distribució d'Accidents per Severitat",
+      "description": "Percentatge d'accidents segons el seu nivell de gravetat",
       "datasource": "PAE Backend",
       "targets": [
         {
@@ -225,10 +229,16 @@
       "options": {
         "pieType": "donut",
         "displayLabels": ["name", "percent"],
+        "reduceOptions": {
+          "values": true,
+          "fields": "/^Cantidad$/",
+          "calcs": ["lastNotNull"]
+        },
         "legend": {
           "displayMode": "table",
           "placement": "bottom",
-          "values": ["value", "percent"]
+          "values": ["value", "percent"],
+          "calcs": []
         },
         "tooltip": {
           "mode": "single"
@@ -237,10 +247,19 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "mappings": [],
           "color": {
             "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
           }
-        }
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -251,8 +270,9 @@
     },
     {
       "type": "table",
-      "title": "🛣️ Carreteras con Mayor Número de Accidentes",
-      "description": "Ranking de vías más afectadas por siniestros",
+      "id": 5,
+      "title": "🛣️ Carreteres amb Major Nombre d'Accidents",
+      "description": "Ranking de vies més afectades per siniestres",
       "datasource": "PAE Backend",
       "targets": [
         {
@@ -341,8 +361,9 @@
     },
     {
       "type": "table",
-      "title": "⚡ Causas Principales de Incidencias",
-      "description": "Factores más comunes que generan incidencias de tránsito",
+      "id": 6,
+      "title": "⚡ Causes Principals d'Incidències",
+      "description": "Factors més comuns que generen incidències de trànsit",
       "datasource": "PAE Backend",
       "targets": [
         {
@@ -428,6 +449,23 @@
         "x": 12,
         "y": 14
       }
+    },
+    {
+      "type": "text",
+      "id": 8,
+      "title": "📖 Guia de Nivells de Severitat",
+      "datasource": null,
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "options": {
+        "content": "# Nivells de Severitat del Tràfic\n\n| Nivell | Classificació | Descripció |\n|-------|---------------|-------------|\n| **Nivell 2** | Lleu | Circulació intensa amb retencions lleugeres o impacte mínim en la mobilitat |\n| **Nivell 3** | Moderada | Circulació amb retencions moderades i impacte mitjà en el tràfic |\n| **Nivell 4** | Greu | Circulació molt afectada amb retencions significatives |\n| **Nivell 5** | Molt Greu / Tancament de Via | Via parcialment o totalment tallada, impacte crític en la circulació |",
+        "mode": "markdown"
+      },
+      "pluginVersion": "11.0.0"
     }
   ],
   "refresh": "1m",
@@ -439,3 +477,7 @@
   },
   "timepicker": {}
 }
+
+```
+
+

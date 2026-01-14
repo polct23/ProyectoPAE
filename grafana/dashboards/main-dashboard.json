@@ -282,12 +282,12 @@
           "root_selector": "",
           "columns": [
             {
-              "selector": "time",
+              "selector": "day",
               "text": "Dia",
               "type": "string"
             },
             {
-              "selector": "value",
+              "selector": "count",
               "text": "Incidencias",
               "type": "number"
             }
@@ -323,7 +323,7 @@
       "type": "table",
       "id": 7,
       "title": "🛑 Carrers Tallats / Incidents Graus (Nivell >= 4)",
-      "description": "Calles cortadas o con incidencias graves",
+      "description": "Carrers tallats o amb incidències graus",
       "datasource": "PAE Backend",
       "targets": [
         {
@@ -343,7 +343,7 @@
             },
             {
               "selector": "descripcion",
-              "text": "Descripción",
+              "text": "Descripci\u00f3",
               "type": "string"
             },
             {
@@ -376,6 +376,23 @@
         "x": 0,
         "y": 13
       }
+    },
+    {
+      "type": "text",
+      "id": 8,
+      "title": "📖 Guía de Niveles de Severidad",
+      "datasource": null,
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "options": {
+        "content": "# Nivells de Severitat del Tràfic\n\n| Nivell | Classificació | Descripció |\n|-------|---------------|-------------|\n| **Nivell 2** | Lleu | Circulació intensa amb retencions lleugeres o impacte mínim en la mobilitat |\n| **Nivell 3** | Moderada | Circulació amb retencions moderades i impacte mitjà en el tràfic |\n| **Nivell 4** | Greu | Circulació molt afectada amb retencions significatives |\n| **Nivell 5** | Molt Greu / Tancament de Via | Via parcialment o totalment tallada, impacte crític en la circulació |",
+        "mode": "markdown"
+      },
+      "pluginVersion": "11.0.0"
     }
   ],
   "refresh": "1m",

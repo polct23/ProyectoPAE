@@ -10,11 +10,11 @@ const Sinistralitat: React.FC = () => {
         <p className="subtitle">Barcelona i Àrea Metropolitana - Dades en temps real</p>
       </div>
 
-      {/* Incidentes por día de la semana */}
+      {/* Incidents per dia de la setmana */}
       <div className="analysis-section analysis-full">
         <div className="section-header">
-          <h2>📅 Incidentes por Día de la Semana</h2>
-          <p>Distribución de incidencias a lo largo de la semana</p>
+          <h2>📅 Incidents per Dia de la Setmana</h2>
+          <p>Distribució de incidències al llarg de la setmana</p>
         </div>
         <GrafanaEmbed 
           dashboardId="main-dashboard"
@@ -27,8 +27,8 @@ const Sinistralitat: React.FC = () => {
       <div className="analysis-grid">
         <div className="analysis-section analysis-full">
           <div className="section-header">
-            <h2>📊 Tipos de Incidencias</h2>
-            <p>Distribución de incidencias por categoría</p>
+            <h2>📊 Tipus d'Incidències</h2>
+            <p>Distribució de incidències per categoria</p>
           </div>
           <GrafanaEmbed 
             dashboardId="traffic-accidents"
@@ -39,8 +39,8 @@ const Sinistralitat: React.FC = () => {
 
         <div className="analysis-section analysis-full">
           <div className="section-header">
-            <h2>🎯 Nivel de Severidad</h2>
-            <p>Porcentaje de incidencias por gravedad</p>
+            <h2>🎯 Nivell de Gravetat</h2>
+            <p>Percentatge de incidències per gravetat</p>
           </div>
           <GrafanaEmbed 
             dashboardId="traffic-accidents"
@@ -54,8 +54,8 @@ const Sinistralitat: React.FC = () => {
       <div className="analysis-grid">
         <div className="analysis-section">
           <div className="section-header">
-            <h2>🛣️ Carreteras Afectadas</h2>
-            <p>Vías con más incidencias</p>
+            <h2>🛣️ Carreteres Afectades</h2>
+            <p>Vies amb més incidències</p>
           </div>
           <GrafanaEmbed 
             dashboardId="traffic-accidents"
@@ -66,8 +66,8 @@ const Sinistralitat: React.FC = () => {
 
         <div className="analysis-section">
           <div className="section-header">
-            <h2>⚡ Causas Principales</h2>
-            <p>Factores más comunes de incidencias</p>
+            <h2>⚡ Causes Principals</h2>
+            <p>Factors més comuns d'incidències</p>
           </div>
           <GrafanaEmbed 
             dashboardId="traffic-accidents"
@@ -77,11 +77,11 @@ const Sinistralitat: React.FC = () => {
         </div>
       </div>
 
-      {/* Calles cortadas */}
+      {/* Carrers tallats */}
       <div className="analysis-section analysis-full">
         <div className="section-header">
           <h2>🚧 Carrers Tallats</h2>
-          <p>Listado de calles cerradas al tráfico actualmente</p>
+          <p>Llistat de carrers tancats al tràfic actualment</p>
         </div>
         <GrafanaEmbed 
           dashboardId="main-dashboard"
@@ -90,14 +90,59 @@ const Sinistralitat: React.FC = () => {
         />
       </div>
 
+      {/* Guía de Severidades */}
+      <div className="severity-guide">
+        <div className="guide-header">
+          <h2>📖 Guia de Nivells de Gravetat</h2>
+          <p>Classificació de l'impacte de cada incidència en la circulació</p>
+        </div>
+        <div className="severity-grid">
+          <div className="severity-card severity-level-2">
+            <div className="level-number">Nivell 2</div>
+            <div className="level-title">Lleu</div>
+            <div className="level-description">
+              Circulació intensa amb retencions lleugeres o impacte mínim en la mobilitat
+            </div>
+            <div className="examples">Ex: Obra en curs, congestió normal</div>
+          </div>
+          
+          <div className="severity-card severity-level-3">
+            <div className="level-number">Nivell 3</div>
+            <div className="level-title">Moderada</div>
+            <div className="level-description">
+              Circulació amb retencions moderades i impacte mitjà en el trànsit
+            </div>
+            <div className="examples">Ex: Accident lleu, obres importants</div>
+          </div>
+          
+          <div className="severity-card severity-level-4">
+            <div className="level-number">Nivell 4</div>
+            <div className="level-title">Greu</div>
+            <div className="level-description">
+              Circulació molt afectada amb retencions significatives
+            </div>
+            <div className="examples">Ex: Accident greu, tancament parcial</div>
+          </div>
+          
+          <div className="severity-card severity-level-5">
+            <div className="level-number">Nivell 5</div>
+            <div className="level-title">Molt Greu / Tancament</div>
+            <div className="level-description">
+              Via parcialment o totalment tallada, impacte crític en la circulació
+            </div>
+            <div className="examples">Ex: Accident crític, via tallada</div>
+          </div>
+        </div>
+      </div>
+
       <div className="info-section">
         <div className="info-content">
-          <h3>ℹ️ Sobre estos datos</h3>
+          <h3>ℹ️ Sobre aquestes dades</h3>
           <ul>
-            <li>✓ Actualizados cada minuto desde el dataset de la <strong>Generalitat de Catalunya (SCT)</strong></li>
-            <li>✓ Incluye retenciones, obras en progreso y eventos meteorológicos</li>
-            <li>✓ Cobertura: Barcelona y Área Metropolitana</li>
-            <li>✓ Los datos están disponibles en tiempo real con coordenadas geográficas</li>
+            <li>✓ Actualitzades cada minut des del dataset de la <strong>Generalitat de Catalunya (SCT)</strong></li>
+            <li>✓ Inclou retencions, obres en curs i events meteorològics</li>
+            <li>✓ Cobertura: Barcelona i Àrea Metropolitana</li>
+            <li>✓ Les dades estan disponibles en temps real amb coordenades geogràfiques</li>
           </ul>
         </div>
       </div>

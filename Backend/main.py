@@ -141,9 +141,15 @@ DATASETS = [
 ]
 app = FastAPI(title="Proyecto PAE - Backend (SQLite)")
 
+# CORS abierto para frontend dockerizado (80/localhost). Ajustable con FRONTEND_ORIGIN.
+frontend_origins = os.getenv("FRONTEND_ORIGIN")
+default_origins = ["http://localhost", "http://localhost:80", "http://localhost:3000"]
+origins = [o.strip() for o in (frontend_origins.split(",") if frontend_origins else default_origins)]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")],
+    allow_origins=origins,
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -535,6 +541,170 @@ def descargar_xml_dataset(dataset_id: int, user: User = Depends(get_current_user
         media_type="application/xml",
         headers={"Content-Disposition": f"attachment; filename={dataset['title']}.xml"}
     )
+
+# ==================== GRAFANA ENDPOINTS ====================
+
+@app.get("/grafana/incidents/total")
+def grafana_total_incidents():
+    """Total de incidencias activas"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        return {"value": len(incidencias)}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
+
+@app.get("/grafana/accidents/today-count")
+def grafana_accidents_today():
+    """Contar retenciones activas"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        retenciones = [inc for inc in incidencias if inc.get('tipo') and 'retenc' in inc.get('tipo', '').lower()]
+        return {"value": len(retenciones)}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
+
+@app.get("/grafana/accidents/by-type")
+def grafana_accidents_by_type():
+    """Incidencias por tipo"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        
+        tipos = {}
+        for inc in incidencias:
+            tipo = inc.get('tipo', 'Desconocido')
+            if tipo:  # Solo contar si el tipo no es None
+                tipos[tipo] = tipos.get(tipo, 0) + 1
+        
+        return [{"tipo": k, "cantidad": v} for k, v in tipos.items()]
+    except Exception as e:
+        return []
+
+@app.get("/grafana/accidents/by-severity")
+def grafana_accidents_by_severity():
+    """Incidencias por severidad"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        
+        severities = {}
+        for inc in incidencias:
+            nivel = inc.get('nivel', 0)
+            if nivel:  # Solo contar si el nivel no es None
+                severities[str(nivel)] = severities.get(str(nivel), 0) + 1
+        
+        return [{"nivel": k, "cantidad": v} for k, v in severities.items()]
+    except Exception as e:
+        return []
+
+@app.get("/grafana/accidents/by-road")
+def grafana_accidents_by_road():
+    """Top carreteras con más incidencias"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        
+        roads = {}
+        for inc in incidencias:
+            carretera = inc.get('carretera', 'Desconocida')
+            roads[carretera] = roads.get(carretera, 0) + 1
+        
+        sorted_roads = sorted(roads.items(), key=lambda x: x[1], reverse=True)[:10]
+        return [{"carretera": k, "cantidad": v} for k, v in sorted_roads]
+    except Exception as e:
+        return []
+
+@app.get("/grafana/incidents/by-cause")
+def grafana_incidents_by_cause():
+    """Causas de incidencias"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        
+        causes = {}
+        for inc in incidencias:
+            causa = inc.get('causa', 'Desconocida')
+            causes[causa] = causes.get(causa, 0) + 1
+        
+        sorted_causes = sorted(causes.items(), key=lambda x: x[1], reverse=True)[:10]
+        return [{"causa": k, "cantidad": v} for k, v in sorted_causes]
+    except Exception as e:
+        return []
+
+@app.get("/grafana/dashboard/incidents-by-weekday")
+def grafana_incidents_by_weekday():
+    """Incidentes por día de la semana"""
+    try:
+        from datetime import datetime
+        incidencias = extraer_coordenadas_con_detalles()
+        
+        # Mapeo de días de semana en catalán
+        day_names = ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
+        day_counts = {day: 0 for day in day_names}
+        
+        # Contar incidencias por día de la semana basado en el campo 'data'
+        for inc in incidencias:
+            data = inc.get('data')
+            if data:
+                try:
+                    # Parsear fecha formato: "Wed, 14 Jan 2026 12:51:30 GMT"
+                    dt = datetime.strptime(data, "%a, %d %b %Y %H:%M:%S %Z")
+                    weekday = dt.weekday()  # 0=Monday, 6=Sunday
+                    day_counts[day_names[weekday]] += 1
+                except:
+                    pass
+        
+        return [{"day": day, "count": count} for day, count in day_counts.items()]
+    except Exception as e:
+        return []
+
+@app.get("/grafana/dashboard/streets-closed")
+def grafana_streets_closed():
+    """Calles cortadas"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        
+        # Filtrar solo las calles cortadas
+        closed_streets = [
+            {
+                "carretera": inc.get('carretera', 'Desconocida'),
+                "descripcion": inc.get('descripcion', ''),
+                "tipo": inc.get('tipo', ''),
+                "causa": inc.get('causa', ''),
+                "nivel": inc.get('nivel', 0),
+                "sentit": inc.get('sentit', '')
+            }
+            for inc in incidencias
+            if (inc.get('descripcion') and 'tallat' in inc.get('descripcion', '').lower()) or 
+               (inc.get('tipo') and 'tall' in inc.get('tipo', '').lower()) or 
+               (inc.get('nivel') and int(inc.get('nivel', 0)) >= 4)
+        ]
+        
+        return {"calles_cortadas": closed_streets, "total": len(closed_streets)}
+    except Exception as e:
+        return {"calles_cortadas": [], "total": 0}
+
+@app.get("/api/incidents-map")
+def incidents_map():
+    """Retorna incidencias con coordenadas para visualizar en mapa"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        
+        # Filtrar solo incidencias con coordenadas
+        incidents_with_coords = [
+            {
+                "latitud": inc.get('lat'),
+                "longitud": inc.get('lon'),
+                "carretera": inc.get('carretera', 'Desconocida'),
+                "descripcion": inc.get('descripcion', ''),
+                "tipo": inc.get('tipo', ''),
+                "causa": inc.get('causa', ''),
+                "nivel": inc.get('nivel', 0),
+                "sentit": inc.get('sentit', '')
+            }
+            for inc in incidencias
+            if inc.get('lat') and inc.get('lon')
+        ]
+        
+        return {"incidents": incidents_with_coords, "total": len(incidents_with_coords)}
+    except Exception as e:
+        return {"error": str(e), "incidents": [], "total": 0}
 
 if __name__ == "__main__":
     import uvicorn

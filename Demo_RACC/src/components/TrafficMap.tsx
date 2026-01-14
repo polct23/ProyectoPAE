@@ -49,10 +49,10 @@ const getIconForIncident = (description: string): L.Icon => {
 };
 
 interface TrafficIncident {
-  id: number;
+  id: number | string;
   lat: number;
   lng: number;
-  type: 'retention' | 'accident' | 'closure';
+  type: 'retention' | 'accident' | 'closure' | 'work' | 'weather';
   description: string;
   causa?: string;
   carretera?: string;
@@ -83,19 +83,24 @@ type TrafficMapProps = {
   routes?: Route[];
 };
 
-const defaultIncidents: TrafficIncident[] = [
-  { id: 1, lat: 41.3851, lng: 2.1734, type: 'retention', description: 'Retención en Diagonal' },
-  { id: 2, lat: 41.3879, lng: 2.1699, type: 'accident', description: 'Accidente en Passeig de Gràcia' },
-  { id: 3, lat: 41.3828, lng: 2.1769, type: 'closure', description: 'Calle cortada en Rambla Catalunya' },
-  { id: 4, lat: 41.3888, lng: 2.1590, type: 'retention', description: 'Tráfico lento en Gran Via' },
-  { id: 5, lat: 41.3947, lng: 2.1778, type: 'retention', description: 'Retención en Meridiana' },
-];
+
+const mapIncidentType = (tipoDescripcion: string): 'retention' | 'accident' | 'closure' | 'work' | 'weather' => {
+  const tipo = tipoDescripcion?.toLowerCase() || '';
+  if (tipo.includes('retenc')) return 'retention';
+  if (tipo.includes('accident') || tipo.includes('accident')) return 'accident';
+  if (tipo.includes('obra') || tipo.includes('work')) return 'work';
+  if (tipo.includes('meteorolog') || tipo.includes('weather')) return 'weather';
+  if (tipo.includes('calle cortada') || tipo.includes('carrer tallat')) return 'closure';
+  return 'retention';
+};
 
 const getIncidentColor = (type: string) => {
   switch (type) {
     case 'retention': return '#f4d03f';
     case 'accident': return '#c94444';
     case 'closure': return '#e67e22';
+    case 'work': return '#3498db';
+    case 'weather': return '#9b59b6';
     default: return '#3498db';
   }
 };
@@ -104,37 +109,74 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
   const [liveIncidents, setLiveIncidents] = useState<TrafficIncident[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Función para obtener coordenadas del backend
+  const parseCoord = (value: any): number => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      // Normaliza: quita espacios, elimina separador de miles y usa punto decimal
+      const cleaned = value.trim().replace(/\s+/g, '').replace(/\./g, '').replace(',', '.');
+      return Number(cleaned);
+    }
+    return NaN;
+  };
+
+  // Función para obtener coordenadas del backend (con fallback)
   const fetchIncidents = async () => {
+    const buildIncidents = (source: any[]) => {
+      const parsed = source.map((inc: any, idx: number) => {
+        const rawLat = inc.latitud ?? inc.lat;
+        const rawLng = inc.longitud ?? inc.lon;
+        const lat = parseCoord(rawLat);
+        const lng = parseCoord(rawLng);
+        return {
+          id: inc.id ?? idx + 1,
+          lat,
+          lng,
+          type: mapIncidentType(inc.tipo || ''),
+          description: inc.descripcion || inc.carretera || 'Incidència',
+          causa: inc.causa,
+          carretera: inc.carretera,
+          pk_inici: inc.pk_inici,
+          pk_fi: inc.pk_fi,
+          sentit: inc.sentit,
+          cap_a: inc.cap_a,
+          data: inc.data,
+          tipo: inc.tipo,
+          __rawLat: rawLat,
+          __rawLng: rawLng
+        } as TrafficIncident & { __rawLat: any; __rawLng: any };
+      });
+
+      const valid = parsed.filter((inc: TrafficIncident & { __rawLat: any; __rawLng: any }) => Number.isFinite(inc.lat) && Number.isFinite(inc.lng));
+      const invalid = parsed.filter((inc: TrafficIncident & { __rawLat: any; __rawLng: any }) => !Number.isFinite(inc.lat) || !Number.isFinite(inc.lng));
+
+      if (invalid.length) {
+        console.warn('⚠️ Incidencias sin coordenadas válidas:', invalid.length, invalid.slice(0, 5).map(i => ({ rawLat: i.__rawLat, rawLng: i.__rawLng })));
+      }
+
+      return valid as TrafficIncident[];
+    };
+
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/incidencias');
-      const data = await response.json();
-      
-      console.log('📍 Datos recibidos del backend:', data);
-      console.log('📍 Total incidencias:', data.incidencias?.length);
-      
-      const incidents: TrafficIncident[] = data.incidencias.map((inc: any, idx: number) => ({
-        id: idx + 1,
-        lat: inc.lat,
-        lng: inc.lon,
-        type: (inc.tipo?.toLowerCase().includes('retenció') ? 'retention' : 
-               inc.tipo?.toLowerCase().includes('accident') ? 'accident' : 'closure') as 'retention' | 'accident' | 'closure',
-        description: inc.descripcion || inc.carretera || 'Incidencia',
-        causa: inc.causa,
-        carretera: inc.carretera,
-        pk_inici: inc.pk_inici,
-        pk_fi: inc.pk_fi,
-        sentit: inc.sentit,
-        cap_a: inc.cap_a,
-        data: inc.data,
-        tipo: inc.tipo
-      }));
-      
-      console.log('📍 Incidencias procesadas:', incidents);
-      console.log('📍 Primera incidencia:', incidents[0]);
-      
-      setLiveIncidents(incidents);
+
+      // Primer intento: endpoint específico para el mapa
+      const respMap = await fetch('http://localhost:8000/api/incidents-map');
+      const dataMap = await respMap.json();
+      console.log('📍 /api/incidents-map total:', dataMap.total);
+      const incidentsMap = buildIncidents(dataMap.incidents || []);
+      if (incidentsMap.length > 0) {
+        setLiveIncidents(incidentsMap);
+        console.log('📍 Incidencias usadas (map):', incidentsMap.length);
+        return;
+      }
+
+      // Fallback: endpoint general /incidencias
+      const respInc = await fetch('http://localhost:8000/incidencias');
+      const dataInc = await respInc.json();
+      console.log('📍 /incidencias total:', dataInc.incidencias?.length);
+      const incidentsInc = buildIncidents(dataInc.incidencias || []);
+      setLiveIncidents(incidentsInc);
+      console.log('📍 Incidencias usadas (fallback):', incidentsInc.length);
     } catch (error) {
       console.error('❌ Error al obtener incidencias:', error);
     } finally {
@@ -157,7 +199,7 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
           type: m.type ?? 'retention',
           description: m.label ?? 'Incidencia'
         }))
-      : defaultIncidents;
+      : [];
 
   console.log('🗺️ liveIncidents.length:', liveIncidents.length);
   console.log('🗺️ Items a mostrar en el mapa:', items);
@@ -166,12 +208,17 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
   const styleHeight = typeof height === 'number' ? `${height}px` : height;
 
   // Calcular el centro del mapa basado en las incidencias
-  const mapCenter: [number, number] = items.length > 0 && items !== defaultIncidents
+  const mapCenter: [number, number] = items.length > 0
     ? [items[0].lat, items[0].lng]
     : [41.3851, 2.1734];
 
   return (
     <div className="traffic-map-container" style={{ height: styleHeight }}>
+      {loading && (
+        <div className="map-loading">
+          <p>Cargando incidencias...</p>
+        </div>
+      )}
       <MapContainer
         center={mapCenter}
         zoom={8}
@@ -182,77 +229,33 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {items.map(incident => (
-          <React.Fragment key={incident.id}>
-            <Marker position={[incident.lat, incident.lng]} icon={getIconForIncident(incident.description)}>
-              <Popup>
-                <div style={{ maxWidth: '250px', fontSize: '12px' }}>
-                  <strong style={{ fontSize: '14px', display: 'block', marginBottom: '8px' }}>
-                    {incident.description}
-                  </strong>
-                  
-                  {incident.causa && (
-                    <div style={{ marginBottom: '6px' }}>
-                      <strong>🔧 Causa:</strong> {incident.causa}
-                    </div>
-                  )}
-                  
-                  {incident.carretera && (
-                    <div style={{ marginBottom: '6px' }}>
-                      <strong>🛣️ Carretera:</strong> {incident.carretera}
-                      {incident.pk_inici && incident.pk_fi && ` (PK ${incident.pk_inici} - ${incident.pk_fi})`}
-                    </div>
-                  )}
-                  
-                  {incident.sentit && (
-                    <div style={{ marginBottom: '6px' }}>
-                      <strong>🔀 Sentit:</strong> {incident.sentit}
-                    </div>
-                  )}
-                  
-                  {incident.cap_a && (
-                    <div style={{ marginBottom: '6px' }}>
-                      <strong>➡️ Cap a:</strong> {incident.cap_a}
-                    </div>
-                  )}
-                  
-                  {incident.data && (
-                    <div style={{ marginBottom: '6px' }}>
-                      <strong>📅 Des de:</strong> {new Date(incident.data).toLocaleString('ca-ES')}
-                    </div>
-                  )}
-                  
-                  {incident.tipo && (
-                    <div style={{ marginBottom: '6px' }}>
-                      <strong>⚠️ Tipus:</strong> {incident.tipo}
-                    </div>
-                  )}
-                  
-                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #ddd', fontSize: '11px', color: '#666' }}>
-                    <strong>📍 Coordenades:</strong> {incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-            <Circle
-              center={[incident.lat, incident.lng]}
-              radius={200}
-              pathOptions={{
-                color: getIncidentColor(incident.type),
-                fillColor: getIncidentColor(incident.type),
-                fillOpacity: 0.35
-              }}
-            />
-          </React.Fragment>
-        ))}
-        {/* Dibuja las rutas si existen */}
-        {routes && routes.map((route, idx) => (
-          <Polyline
-            key={idx}
-            positions={route.path.map(p => [p.lat, p.lng])}
-            pathOptions={{ color: route.color || 'red', weight: 6 }}
-          />
+          <Marker
+            key={incident.id}
+            position={[incident.lat, incident.lng]}
+            icon={getIconForIncident(incident.description)}
+          >
+            <Popup>
+              <div style={{ maxWidth: '300px' }}>
+                <strong>{incident.description}</strong>
+                <hr style={{ margin: '5px 0' }} />
+                {incident.tipo && <div><b>Tipo:</b> {incident.tipo}</div>}
+                {incident.carretera && <div><b>Carretera:</b> {incident.carretera}</div>}
+                {incident.causa && <div><b>Causa:</b> {incident.causa}</div>}
+                {incident.sentit && <div><b>Sentit:</b> {incident.sentit}</div>}
+                {incident.cap_a && <div><b>Cap a:</b> {incident.cap_a}</div>}
+                {incident.pk_inici && <div><b>PK Inici:</b> {incident.pk_inici}</div>}
+                {incident.pk_fi && <div><b>PK Fi:</b> {incident.pk_fi}</div>}
+                {incident.data && <div><b>Data:</b> {incident.data}</div>}
+              </div>
+            </Popup>
+          </Marker>
         ))}
       </MapContainer>
+      {!loading && (
+        <div className="map-info">
+          <span>{items.length} incidencias detectadas</span>
+        </div>
+      )}
     </div>
   );
 };
