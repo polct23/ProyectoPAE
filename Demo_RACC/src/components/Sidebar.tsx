@@ -14,7 +14,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
     { id: 'inici', label: 'Inici' },
     { id: 'sinistralitat', label: 'Sinistralitat' },
     { id: 'datasets', label: 'Datasets' },
-    { id: 'informe', label: 'Informe setmanal' }
+    { id: 'informe', label: 'Informe setmanal' },
+    { id: 'chatbot', label: 'Tu Assistent de RACC' }
   ];
 
   const menuItems = user ? [...baseItems, { id: 'configuracio', label: 'Configuració' }] : baseItems;

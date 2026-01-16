@@ -4,6 +4,13 @@ sqlmodel
 python-dotenv
 passlib
 python-jose[cryptography]
+python-multipart
 requests
 lxml
 # xml2txt
+
+# RAG dependencies
+openai
+weaviate-client
+pypdf
+opik

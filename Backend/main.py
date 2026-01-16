@@ -15,7 +15,13 @@ from io import StringIO
 from analizar_dataset_1 import extraer_incidencias
 from datasets import extraer_coordenadas_xml, extraer_coordenadas_con_detalles
 import os
+from fastapi import UploadFile, File
+from rag_service import initialize_weaviate, obtener_respuesta_rag, limpiar_historial, obtener_archivos_disponibles
+import logging
 
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
@@ -705,6 +711,116 @@ def incidents_map():
         return {"incidents": incidents_with_coords, "total": len(incidents_with_coords)}
     except Exception as e:
         return {"error": str(e), "incidents": [], "total": 0}
+
+# ==================== RAG ENDPOINTS ====================
+
+@app.post("/rag/upload")
+async def upload_document(file: UploadFile = File(...), user: User = Depends(get_current_user)):
+    """
+    Endpoint para subir documentos (PDF, XML, JSON, CSV) y procesarlos para RAG.
+    Requiere autenticación.
+    """
+    allowed_extensions = ['.pdf', '.xml', '.json', '.csv']
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"Formato no permitido. Formatos aceptados: {', '.join(allowed_extensions)}")
+    
+    # Crear directorio temporal si no existe
+    import tempfile
+    temp_dir = tempfile.mkdtemp()
+    file_path = os.path.join(temp_dir, file.filename)
+    
+    try:
+        # Guardar archivo
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        # Procesar con Weaviate
+        result = initialize_weaviate(file_path)
+        
+        # Limpiar archivo temporal
+        os.remove(file_path)
+        os.rmdir(temp_dir)
+        
+        if result["success"]:
+            return {
+                "message": result["message"],
+                "filename": file.filename
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result["message"])
+            
+    except Exception as e:
+        # Limpiar en caso de error
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        if os.path.exists(temp_dir):
+            os.rmdir(temp_dir)
+        raise HTTPException(status_code=500, detail=f"Error procesando PDF: {str(e)}")
+
+
+@app.post("/rag/ask")
+async def rag_ask(data: dict):
+    """
+    Endpoint público para hacer preguntas al sistema RAG.
+    Requiere que se hayan cargado documentos previamente.
+    
+    Parámetros:
+    - question: La pregunta del usuario
+    - language: (opcional) Código de idioma
+    - file_type: (opcional) Filtrar por tipo de archivo: 'pdf', 'csv', 'xml', 'json'
+    """
+    question = data.get("question", "")
+    language = data.get("language", None)  # opcional
+    file_type = data.get("file_type", None)  # opcional
+    
+    if not question:
+        raise HTTPException(status_code=400, detail="La pregunta no puede estar vacía")
+    
+    # Validar file_type si se proporciona
+    if file_type and file_type not in ['pdf', 'csv', 'xml', 'json']:
+        raise HTTPException(status_code=400, detail="file_type debe ser: 'pdf', 'csv', 'xml' o 'json'")
+    
+    try:
+        answer = obtener_respuesta_rag(question, language, file_type_filter=file_type)
+        return {
+            "question": question,
+            "answer": answer,
+            "file_type_filter": file_type
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error procesando pregunta: {str(e)}")
+
+
+@app.get("/rag/files")
+async def rag_list_files():
+    """
+    Endpoint para listar los archivos disponibles en la base de datos vectorial.
+    """
+    try:
+        files = obtener_archivos_disponibles()
+        return {
+            "files": files,
+            "count": len(files)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error obteniendo archivos: {str(e)}")
+
+
+@app.post("/rag/clear-history")
+async def clear_rag_history(user: User = Depends(get_current_user)):
+    """
+    Endpoint para limpiar el historial de conversación RAG.
+    Requiere autenticación.
+    """
+    try:
+        limpiar_historial()
+        return {"message": "Historial limpiado exitosamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error limpiando historial: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

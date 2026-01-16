@@ -9,6 +9,7 @@ import Factors from './pages/Factors';
 import Informe from './pages/Informe';
 import Configuracio from './pages/Configuracio';
 import Login from './pages/Login';
+import ChatBot from './pages/ChatBot';
 import { AuthProvider, useAuth } from './AuthContext';
 import { ChatbotWidget } from './components/ChatbotWidget';
 
@@ -37,6 +38,8 @@ function AppContent() {
         return <Informe />;
       case 'configuracio':
         return <Configuracio />;
+      case 'chatbot':
+        return <ChatBot />;
       case 'login':
         return <Login />; // Login ya usa el AuthContext para cambiar estado
       case 'inici':
@@ -58,6 +61,7 @@ function AppContent() {
             {activeSection === 'datasets' && '📁 Datasets'}
             {activeSection === 'informe' && '📋 Informe setmanal'}
             {activeSection === 'configuracio' && '⚙️ Configuració'}
+            {activeSection === 'chatbot' && '🤖 Assistent Virtual'}
             {activeSection === 'login' && '🔐 Login'}
           </h1>
         </header>
