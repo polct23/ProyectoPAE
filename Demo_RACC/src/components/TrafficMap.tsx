@@ -104,6 +104,11 @@ const getIncidentColor = (type: string) => {
 const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', routes }) => {
   const [liveIncidents, setLiveIncidents] = useState<TrafficIncident[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Filtros
+  const [onlySevere, setOnlySevere] = useState(false);
+  const [selectedType, setSelectedType] = useState<string>('Tots');
+  const [selectedArea, setSelectedArea] = useState<string>('AMB');
 
   // Función para obtener coordenadas del backend
   const fetchIncidents = async () => {
@@ -149,7 +154,7 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
     fetchIncidents();
   }, []);
 
-  const items: TrafficIncident[] = liveIncidents.length > 0
+  const rawItems: TrafficIncident[] = liveIncidents.length > 0
     ? liveIncidents
     : (markers && markers.length)
       ? markers.map((m, i) => ({
@@ -161,23 +166,87 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
         }))
       : defaultIncidents;
 
+  // Aplicar filtros
+  const items = rawItems.filter(inc => {
+    // Filtro de severidad
+    if (onlySevere && (inc.nivel ?? 0) < 3) return false;
+
+    // Filtro de tipo
+    if (selectedType !== 'Tots') {
+      const tipo = (inc.tipo || '').toLowerCase();
+      const causa = (inc.causa || '').toLowerCase();
+      if (selectedType === 'Retencions' && !tipo.includes('retenc') && !causa.includes('retenc')) return false;
+      if (selectedType === 'Obres' && !tipo.includes('obr') && !causa.includes('obr')) return false;
+      if (selectedType === 'Meteorologia' && !tipo.includes('meteor') && !causa.includes('meteor') && !causa.includes('neu') && !causa.includes('pluja')) return false;
+    }
+
+    // Filtro de área
+    if (selectedArea === 'AMB') {
+      // Bounding box AMB: lat [41.2, 41.7], lon [1.9, 2.5]
+      if (inc.lat < 41.2 || inc.lat > 41.7 || inc.lng < 1.9 || inc.lng > 2.5) return false;
+    }
+
+    return true;
+  });
+
   console.log('🗺️ liveIncidents.length:', liveIncidents.length);
   console.log('🗺️ Items a mostrar en el mapa:', items);
   console.log('🗺️ Total items:', items.length);
 
   const styleHeight = typeof height === 'number' ? `${height}px` : height;
 
-  // Calcular el centro del mapa basado en las incidencias
-  const mapCenter: [number, number] = items.length > 0 && items !== defaultIncidents
-    ? [items[0].lat, items[0].lng]
-    : [41.3851, 2.1734];
+  // Calcular el centro del mapa basado en el área seleccionada
+  const mapCenter: [number, number] = selectedArea === 'AMB'
+    ? [41.45, 2.2]  // Centro AMB (Barcelona)
+    : [41.6, 1.6];   // Centro Catalunya
+
+  const mapZoom = selectedArea === 'AMB' ? 11 : 8;
 
   return (
     <div className="traffic-map-container" style={{ height: styleHeight }}>
+      {/* Panel de filtros */}
+      <div className="map-filters-panel">
+        <div className="filter-title">🔍 Filtres</div>
+        
+        <div className="filter-item">
+          <label className="filter-checkbox">
+            <input
+              type="checkbox"
+              checked={onlySevere}
+              onChange={(e) => setOnlySevere(e.target.checked)}
+            />
+            <span>Només nivells 3–5</span>
+          </label>
+        </div>
+
+        <div className="filter-item">
+          <label>Tipus</label>
+          <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
+            <option value="Tots">Tots</option>
+            <option value="Retencions">Retencions</option>
+            <option value="Obres">Obres</option>
+            <option value="Meteorologia">Meteorologia</option>
+          </select>
+        </div>
+
+        <div className="filter-item">
+          <label>Àrea</label>
+          <select value={selectedArea} onChange={(e) => setSelectedArea(e.target.value)}>
+            <option value="AMB">AMB</option>
+            <option value="TOT">Tot</option>
+          </select>
+        </div>
+
+        <div className="filter-stats">
+          {items.length} incidències
+        </div>
+      </div>
+
       <MapContainer
         center={mapCenter}
-        zoom={8}
+        zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
+        key={selectedArea}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
