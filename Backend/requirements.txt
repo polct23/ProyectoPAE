@@ -6,4 +6,5 @@ passlib
 python-jose[cryptography]
 requests
 lxml
+python-multipart
 # xml2txt

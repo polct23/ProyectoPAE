@@ -62,6 +62,7 @@ interface TrafficIncident {
   cap_a?: string;
   data?: string;
   tipo?: string;
+  nivel?: number;
 }
 
 type ExternalMarker = {
@@ -128,7 +129,8 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
         sentit: inc.sentit,
         cap_a: inc.cap_a,
         data: inc.data,
-        tipo: inc.tipo
+        tipo: inc.tipo,
+        nivel: inc.nivel
       }));
       
       console.log('📍 Incidencias procesadas:', incidents);
@@ -226,6 +228,11 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
                       <strong>⚠️ Tipus:</strong> {incident.tipo}
                     </div>
                   )}
+                  {typeof incident.nivel === 'number' && (
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong>📊 Nivell:</strong> {incident.nivel}
+                    </div>
+                  )}
                   
                   <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #ddd', fontSize: '11px', color: '#666' }}>
                     <strong>📍 Coordenades:</strong> {incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}
@@ -237,8 +244,8 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
               center={[incident.lat, incident.lng]}
               radius={200}
               pathOptions={{
-                color: getIncidentColor(incident.type),
-                fillColor: getIncidentColor(incident.type),
+                color: (incident.nivel ?? 0) >= 3 ? '#e11d48' : getIncidentColor(incident.type),
+                fillColor: (incident.nivel ?? 0) >= 3 ? '#e11d48' : getIncidentColor(incident.type),
                 fillOpacity: 0.35
               }}
             />

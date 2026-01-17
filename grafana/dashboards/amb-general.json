@@ -1,0 +1,285 @@
+{
+  "id": null,
+  "uid": "amb-general",
+  "title": "AMB – General",
+  "tags": ["amb", "general", "traffic"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "description": "Vista macro del trànsit i la sinistralitat a l'Àrea Metropolitana de Barcelona",
+  "panels": [
+    {
+      "type": "stat",
+      "id": 1,
+      "title": "Total incidències actives",
+      "description": "Recompte d'incidències actives en el rang de temps seleccionat",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/incidents/total",
+          "url_options": { "method": "GET" },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "#10b981" },
+              { "value": 3, "color": "#f59e0b" },
+              { "value": 8, "color": "#ef4444" }
+            ]
+          },
+          "unit": "short",
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "id": 2,
+      "title": "% incidències greus",
+      "description": "(incidències amb nivell >= 3) / (total incidències) * 100",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/incidents/severity-percentage",
+          "url_options": { "method": "GET" },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "#10b981" },
+              { "value": 20, "color": "#f59e0b" },
+              { "value": 40, "color": "#ef4444" }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "id": 3,
+      "title": "Carreteres afectades",
+      "description": "Número de carreteres amb incidències actives",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/accidents/distinct-roads",
+          "url_options": { "method": "GET" },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "#10b981" },
+              { "value": 5, "color": "#f59e0b" },
+              { "value": 10, "color": "#ef4444" }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "id": 4,
+      "title": "Incidències/h (últimes 24h)",
+      "description": "Ritme mitjà estimat assumint distribució uniforme en les darreres 24h",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/incidents/per-hour",
+          "url_options": { "method": "GET" },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "#10b981" },
+              { "value": 3, "color": "#f59e0b" },
+              { "value": 6, "color": "#ef4444" }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 }
+    },
+    {
+      "type": "barchart",
+      "id": 5,
+      "title": "Incidències per dia de la setmana",
+      "description": "Distribució de l'activitat per dia (rere 24h)",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/dashboard/incidents-by-weekday",
+          "url_options": { "method": "GET" },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "orientation": "vertical",
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 }
+    },
+    {
+      "type": "barchart",
+      "id": 6,
+      "title": "Incidències per comarca/àrea",
+      "description": "Top zones amb més incidències",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/accidents/by-region",
+          "url_options": { "method": "GET" },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "legend": { "calcs": [], "displayMode": "list", "placement": "right" },
+        "tooltip": { "mode": "single" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 }
+    },
+    {
+      "type": "barchart",
+      "id": 7,
+      "title": "Top 5 carreteres per incidències",
+      "description": "Recompte d'incidències agrupat per carretera",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/accidents/by-road",
+          "url_options": { "method": "GET" },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "limit",
+          "options": { "limit": 5 }
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "legend": { "calcs": [], "displayMode": "list", "placement": "right" },
+        "tooltip": { "mode": "single" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 }
+    },
+    {
+      "type": "barchart",
+      "id": 8,
+      "title": "Incidències per tipus",
+      "description": "Composició de les incidències per categoria",
+      "datasource": "PAE Backend",
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "/grafana/accidents/by-type",
+          "url_options": { "method": "GET" },
+          "format": "table",
+          "root_selector": ""
+        }
+      ],
+      "options": {
+        "orientation": "vertical",
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 37,
+  "style": "dark",
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "version": 2
+}

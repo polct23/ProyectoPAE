@@ -1,0 +1,110 @@
+{
+  "id": null,
+  "uid": "amb-severitat",
+  "title": "AMB – Severitat",
+  "tags": ["amb", "severitat", "traffic"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "description": "Seguiment de severitat, sense KPIs generals",
+  "panels": [
+    {
+      "type": "stat",
+      "id": 1,
+      "title": "% incidències greus",
+      "datasource": "PAE Backend",
+      "targets": [ { "type": "json", "source": "url", "url": "/grafana/incidents/severity-percentage", "url_options": { "method": "GET" }, "format": "table", "root_selector": "" } ],
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "horizontal", "textMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "mode": "absolute", "steps": [ { "value": null, "color": "#10b981" }, { "value": 20, "color": "#f59e0b" }, { "value": 40, "color": "#ef4444" } ] } } },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "id": 2,
+      "title": "Incidències greus (n)",
+      "datasource": "PAE Backend",
+      "targets": [ { "type": "json", "source": "url", "url": "/grafana/incidents/severe-count", "url_options": { "method": "GET" }, "format": "table", "root_selector": "" } ],
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "horizontal", "textMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "value": null, "color": "#10b981" }, { "value": 5, "color": "#f59e0b" }, { "value": 10, "color": "#ef4444" } ] } } },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "id": 3,
+      "title": "Nivell mitjà",
+      "datasource": "PAE Backend",
+      "targets": [ { "type": "json", "source": "url", "url": "/grafana/incidents/avg-severity", "url_options": { "method": "GET" }, "format": "table", "root_selector": "" } ],
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "horizontal", "textMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "value": null, "color": "#10b981" }, { "value": 3, "color": "#f59e0b" }, { "value": 4, "color": "#ef4444" } ] } } },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "id": 4,
+      "title": "Carreteres amb incidències greus",
+      "datasource": "PAE Backend",
+      "targets": [ { "type": "json", "source": "url", "url": "/grafana/incidents/severe-distinct-roads", "url_options": { "method": "GET" }, "format": "table", "root_selector": "" } ],
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "horizontal", "textMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "value": null, "color": "#10b981" }, { "value": 5, "color": "#f59e0b" }, { "value": 10, "color": "#ef4444" } ] } } },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 }
+    },
+    {
+      "type": "barchart",
+      "id": 5,
+      "title": "Distribució per severitat",
+      "description": "Incidències per nivell (1-5)",
+      "datasource": "PAE Backend",
+      "targets": [ { "type": "json", "source": "url", "url": "/grafana/accidents/by-severity", "url_options": { "method": "GET" }, "format": "table", "root_selector": "" } ],
+      "options": {
+        "orientation": "vertical",
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "single" },
+        "xAxis": { "show": true },
+        "yAxis": { "show": true },
+        "barWidth": 0.8
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "bars", "lineWidth": 1, "fillOpacity": 80 }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "barchart",
+      "id": 6,
+      "title": "Greus per tipus",
+      "datasource": "PAE Backend",
+      "targets": [ { "type": "json", "source": "url", "url": "/grafana/incidents/severe-by-type", "url_options": { "method": "GET" }, "format": "table", "root_selector": "" } ],
+      "options": { "orientation": "vertical", "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 }
+    },
+    {
+      "type": "barchart",
+      "id": 7,
+      "title": "Greus per causa",
+      "datasource": "PAE Backend",
+      "targets": [ { "type": "json", "source": "url", "url": "/grafana/incidents/severe-by-cause", "url_options": { "method": "GET" }, "format": "table", "root_selector": "" } ],
+      "options": { "orientation": "horizontal", "legend": { "calcs": [], "displayMode": "list", "placement": "right" }, "tooltip": { "mode": "single" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 }
+    },
+    {
+      "type": "barchart",
+      "id": 8,
+      "title": "Greus per carretera",
+      "datasource": "PAE Backend",
+      "targets": [ { "type": "json", "source": "url", "url": "/grafana/incidents/severe-by-road", "url_options": { "method": "GET" }, "format": "table", "root_selector": "" } ],
+      "options": { "orientation": "horizontal", "legend": { "calcs": [], "displayMode": "list", "placement": "right" }, "tooltip": { "mode": "single" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 37,
+  "style": "dark",
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "version": 4
+}

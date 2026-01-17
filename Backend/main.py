@@ -1,4 +1,5 @@
 from typing import Optional, List
+from collections import Counter
 from fastapi import FastAPI, HTTPException, Depends, Request, Response, status, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
@@ -414,6 +415,102 @@ def delete_dataset(dataset_id: int, user: User = Depends(get_current_user), sess
 def configuracion(user: User = Depends(get_current_user)):
     return {"config": "Solo admin puede ver esto"}
 
+
+# --- Incidències de trànsit (SCT) ---
+def _safe_incidencies_detallades() -> List[dict]:
+    """Obtiene incidencias detalladas manejando errores de red/XML."""
+    try:
+        incidencies = extraer_coordenadas_con_detalles()
+        return incidencies or []
+    except Exception as exc:  # pragma: no cover - logging prop
+        print(f"Error obtenint incidencies: {exc}")
+        return []
+
+
+def _parse_nivel(valor) -> int:
+    try:
+        return int(valor)
+    except Exception:
+        return 0
+
+
+@app.get("/api/incidencies/raw")
+def api_incidencies_raw():
+    incidencies = _safe_incidencies_detallades()
+    return {"incidencies": incidencies, "total": len(incidencies)}
+
+
+@app.get("/api/incidencies/summary")
+def api_incidencies_summary():
+    incidencies = _safe_incidencies_detallades()
+    total = len(incidencies)
+    greus = sum(1 for inc in incidencies if _parse_nivel(inc.get("nivel")) >= 3)
+    percent_greus = (greus / total * 100) if total else 0.0
+
+    carretera_counts = Counter(str(inc.get("carretera") or "Desconeguda") for inc in incidencies)
+    top = carretera_counts.most_common(1)
+    via_mes_afectada = None
+    if top:
+        via, count = top[0]
+        via_mes_afectada = {"carretera": via, "incidents": count}
+
+    return {
+        "total_incidents": total,
+        "percent_greus": percent_greus,
+        "via_mes_afectada": via_mes_afectada,
+    }
+
+
+@app.get("/api/incidencies/by_tipo")
+def api_incidencies_by_tipo():
+    incidencies = _safe_incidencies_detallades()
+    counts = Counter(str(inc.get("tipo") or "Desconegut") for inc in incidencies)
+    return [
+        {"tipo": tipo, "count": total}
+        for tipo, total in counts.most_common()
+    ]
+
+
+@app.get("/api/incidencies/by_nivel")
+def api_incidencies_by_nivel():
+    incidencies = _safe_incidencies_detallades()
+    counts = Counter(_parse_nivel(inc.get("nivel")) for inc in incidencies)
+    ordered = sorted(counts.items(), key=lambda x: x[0])
+    return [{"nivel": nivel, "count": total} for nivel, total in ordered]
+
+
+@app.get("/api/incidencies/ranking_trams")
+def api_incidencies_ranking_trams():
+    incidencies = _safe_incidencies_detallades()
+    ranking = {}
+
+    for inc in incidencies:
+        carretera = str(inc.get("carretera") or "Desconeguda")
+        info = ranking.setdefault(
+            carretera,
+            {"carretera": carretera, "incidents": 0, "max_nivel": 0, "_tipos": Counter()},
+        )
+        info["incidents"] += 1
+        info["max_nivel"] = max(info["max_nivel"], _parse_nivel(inc.get("nivel")))
+        info["_tipos"].update([str(inc.get("tipo") or "Desconegut")])
+
+    resultado = []
+    for carretera, data in ranking.items():
+        tipo_principal = None
+        if data["_tipos"]:
+            tipo_principal = data["_tipos"].most_common(1)[0][0]
+        resultado.append(
+            {
+                "carretera": carretera,
+                "incidents": data["incidents"],
+                "max_nivel": data["max_nivel"],
+                "tipo_principal": tipo_principal,
+            }
+        )
+
+    resultado.sort(key=lambda x: x["incidents"], reverse=True)
+    return resultado[:10]
+
 @app.get("/coordenadas")
 def obtener_coordenadas():
     """Endpoint público que obtiene coordenadas en tiempo real del XML de incidencias"""
@@ -630,6 +727,18 @@ def grafana_total_incidents():
     except Exception as e:
         return {"value": 0, "error": str(e)}
 
+
+@app.get("/grafana/incidents/per-hour")
+def grafana_incidents_per_hour():
+    """Ritmo medio de incidencias por hora (estimado sobre las últimas 24h)"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        hours = 24
+        rate = (len(incidencias) / hours) if hours else 0
+        return {"value": round(rate, 2)}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
+
 @app.get("/grafana/accidents/today-count")
 def grafana_accidents_today():
     """Contar retenciones activas"""
@@ -656,19 +765,115 @@ def grafana_accidents_by_type():
     except Exception as e:
         return []
 
+
+def _filter_severe(incidencias):
+    return [inc for inc in incidencias if inc.get('nivel') and int(inc.get('nivel', 0)) >= 3]
+
+
+@app.get("/grafana/incidents/severe-count")
+def grafana_incidents_severe_count():
+    """Total de incidencias con nivel >= 3"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        graves = _filter_severe(incidencias)
+        return {"value": len(graves)}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
+
+
+@app.get("/grafana/incidents/avg-severity")
+def grafana_incidents_avg_severity():
+    """Media de nivel de severidad"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        niveles = [int(inc.get('nivel')) for inc in incidencias if inc.get('nivel')]
+        if not niveles:
+            return {"value": 0}
+        return {"value": round(sum(niveles) / len(niveles), 2)}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
+
+
+@app.get("/grafana/incidents/severe-distinct-roads")
+def grafana_incidents_severe_distinct_roads():
+    """Número de carreteras con incidencias graves (nivel >=3)"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        graves = _filter_severe(incidencias)
+        roads = {inc.get('carretera') for inc in graves if inc.get('carretera')}
+        return {"value": len(roads)}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
+
+
+@app.get("/grafana/incidents/severe-by-cause")
+def grafana_incidents_severe_by_cause():
+    """Causas de incidencias graves (nivel >=3)"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        graves = _filter_severe(incidencias)
+        causes = {}
+        for inc in graves:
+            causa = inc.get('causa', 'Desconeguda')
+            causes[causa] = causes.get(causa, 0) + 1
+        sorted_causes = sorted(causes.items(), key=lambda x: x[1], reverse=True)[:10]
+        return [{"causa": k, "cantidad": v} for k, v in sorted_causes]
+    except Exception:
+        return []
+
+
+@app.get("/grafana/incidents/severe-by-type")
+def grafana_incidents_severe_by_type():
+    """Incidencias graves por tipo"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        graves = _filter_severe(incidencias)
+        tipos = {}
+        for inc in graves:
+            tipo = inc.get('tipo', 'Desconegut')
+            if tipo:
+                tipos[tipo] = tipos.get(tipo, 0) + 1
+        return [{"tipo": k, "cantidad": v} for k, v in sorted(tipos.items(), key=lambda x: x[1], reverse=True)]
+    except Exception:
+        return []
+
+
+@app.get("/grafana/incidents/severe-by-road")
+def grafana_incidents_severe_by_road():
+    """Top carreteras con incidencias graves"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        graves = _filter_severe(incidencias)
+        roads = {}
+        for inc in graves:
+            carretera = inc.get('carretera', 'Desconeguda')
+            roads[carretera] = roads.get(carretera, 0) + 1
+        sorted_roads = sorted(roads.items(), key=lambda x: x[1], reverse=True)[:10]
+        return [{"carretera": k, "cantidad": v} for k, v in sorted_roads]
+    except Exception:
+        return []
+
 @app.get("/grafana/accidents/by-severity")
 def grafana_accidents_by_severity():
     """Incidencias por severidad"""
     try:
         incidencias = extraer_coordenadas_con_detalles()
-        
-        severities = {}
+
+        # Prellenamos niveles 1-5 para que el gráfico muestre barras aunque no haya casos
+        severities = {str(i): 0 for i in range(1, 6)}
         for inc in incidencias:
-            nivel = inc.get('nivel', 0)
-            if nivel:  # Solo contar si el nivel no es None
-                severities[str(nivel)] = severities.get(str(nivel), 0) + 1
-        
-        return [{"nivel": k, "cantidad": v} for k, v in severities.items()]
+            nivel_raw = inc.get('nivel')
+            try:
+                nivel = int(nivel_raw)
+            except Exception:
+                continue
+            if nivel <= 0:
+                continue
+            key = str(nivel)
+            severities[key] = severities.get(key, 0) + 1
+
+        ordered = sorted(severities.items(), key=lambda x: int(x[0]))
+        return [{"nivel": k, "cantidad": v} for k, v in ordered]
     except Exception as e:
         return []
 
@@ -687,6 +892,76 @@ def grafana_accidents_by_road():
         return [{"carretera": k, "cantidad": v} for k, v in sorted_roads]
     except Exception as e:
         return []
+
+
+def _region_from_incidence(inc: dict) -> str:
+    """Clasifica en regiones gruesas para Grafana (evita 'Desconeguda')."""
+    try:
+        lat = float(inc.get('lat', 'nan'))
+        lon = float(inc.get('lon', inc.get('lng', 'nan')))
+    except Exception:
+        lat = float('nan')
+        lon = float('nan')
+
+    carretera = (inc.get('carretera') or '').upper().strip()
+
+    # Prefer coordenadas si existen
+    if not (lat != lat or lon != lon):  # check for NaN
+        if 41.2 <= lat <= 41.7 and 1.9 <= lon <= 2.5:
+            return 'AMB'
+        if 40.5 <= lat <= 43.8 and -1.5 <= lon <= 3.6:
+            return 'Catalunya'
+
+    # Fallbacks basados en carretera (B- suelen ser area BCN)
+    if carretera.startswith('B-') or carretera.startswith('BV-'):
+        return 'AMB'
+    if carretera.startswith('C-') or carretera.startswith('AP-') or carretera.startswith('A-'):
+        return 'Catalunya'
+
+    return 'Desconeguda'
+
+
+@app.get("/grafana/accidents/by-region")
+def grafana_accidents_by_region():
+    """Incidencias agrupadas por área (AMB vs Catalunya vs Desconeguda)."""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        regions = {}
+        for inc in incidencias:
+            region = _region_from_incidence(inc)
+            regions[region] = regions.get(region, 0) + 1
+        sorted_regions = sorted(regions.items(), key=lambda x: x[1], reverse=True)
+        return [{"area": k, "cantidad": v} for k, v in sorted_regions]
+    except Exception:
+        return []
+
+@app.get("/grafana/accidents/distinct-roads")
+def grafana_distinct_roads():
+    """Número de carreteras distintas con incidencias activas"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        roads = set()
+        for inc in incidencias:
+            carretera = inc.get('carretera', 'Desconocida')
+            if carretera and carretera != 'Desconocida':
+                roads.add(carretera)
+        return {"value": len(roads)}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
+
+@app.get("/grafana/incidents/severity-percentage")
+def grafana_severity_percentage():
+    """Porcentaje de incidencias graves (nivel >= 3)"""
+    try:
+        incidencias = extraer_coordenadas_con_detalles()
+        if not incidencias:
+            return {"value": 0}
+        
+        graves = sum(1 for inc in incidencias if inc.get('nivel') and int(inc.get('nivel', 0)) >= 3)
+        percentage = (graves / len(incidencias)) * 100
+        return {"value": round(percentage, 2)}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
 
 @app.get("/grafana/incidents/by-cause")
 def grafana_incidents_by_cause():
@@ -756,6 +1031,16 @@ def grafana_streets_closed():
         return {"calles_cortadas": closed_streets, "total": len(closed_streets)}
     except Exception as e:
         return {"calles_cortadas": [], "total": 0}
+
+
+@app.get("/grafana/dashboard/streets-closed/count")
+def grafana_streets_closed_count():
+    """Total de calles/carreteras cortadas"""
+    try:
+        data = grafana_streets_closed()
+        return {"value": data.get("total", 0)} if isinstance(data, dict) else {"value": 0}
+    except Exception as e:
+        return {"value": 0, "error": str(e)}
 
 @app.get("/api/incidents-map")
 def incidents_map():
