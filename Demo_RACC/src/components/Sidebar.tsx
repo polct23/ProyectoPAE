@@ -38,11 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
       </nav>
 
       <div className="sidebar-footer" style={{ marginTop: 16, padding: '0 12px' }}>
-        {!user ? (
-          <button className="sidebar-login-btn" onClick={() => onSectionChange('login')}>
-            Login
-          </button>
-        ) : (
+        {user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontSize: 14 }}>Admin: {user}</div>
             <button

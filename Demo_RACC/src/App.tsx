@@ -14,7 +14,7 @@ import { ChatbotWidget } from './components/ChatbotWidget';
 
 function AppContent() {
   const [activeSection, setActiveSection] = useState('inici');
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   // si el usuario se autentica y está en la pantalla de login, vamos a configuración
   useEffect(() => {
@@ -60,6 +60,36 @@ function AppContent() {
             {activeSection === 'configuracio' && '⚙️ Configuració'}
             {activeSection === 'login' && '🔐 Login'}
           </h1>
+
+          <div className="header-actions">
+            {!user && (
+              <button className="admin-cta" onClick={() => setActiveSection('login')}>
+                <span className="admin-cta__icon">🔒</span>
+                <div className="admin-cta__text">
+                  <small>Accés restringit</small>
+                  <span>Accés admin</span>
+                </div>
+              </button>
+            )}
+
+            {user && (
+              <div className="user-chip">
+                <div className="user-chip__info">
+                  <small>Administrador</small>
+                  <strong>{user}</strong>
+                </div>
+                <button
+                  className="chip-action"
+                  onClick={async () => {
+                    await logout();
+                    setActiveSection('inici');
+                  }}
+                >
+                  Sortir
+                </button>
+              </div>
+            )}
+          </div>
         </header>
 
         <div className="content-area">

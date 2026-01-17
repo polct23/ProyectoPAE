@@ -47,6 +47,89 @@ body {
   gap: 12px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #111;
+  color: #fff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.admin-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+}
+
+.admin-cta__icon {
+  font-size: 18px;
+}
+
+.admin-cta__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.admin-cta__text small {
+  opacity: 0.75;
+  font-size: 12px;
+}
+
+.admin-cta__text span {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e7e9ed;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.user-chip__info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.user-chip__info small {
+  color: #7a7f88;
+  font-weight: 600;
+}
+
+.chip-action {
+  border: none;
+  background: #f4d03f;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.chip-action:hover {
+  background: #edc029;
+  transform: translateY(-1px);
+}
+
 .search-bar {
   padding: 12px 25px;
   border: 2px solid #e0e0e0;
