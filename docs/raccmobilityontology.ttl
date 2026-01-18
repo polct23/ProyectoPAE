@@ -1,0 +1,747 @@
+@prefix racc: <https://pae1.upc.edu/raccmobilityontology#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix ssn:  <http://www.w3.org/ns/ssn/> .
+@prefix time: <http://www.w3.org/2006/time#> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
+@prefix unit: <http://qudt.org/vocab/unit/> .
+@prefix geo:  <http://www.opengis.net/ont/geosparql#> .
+@prefix dc:   <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+############################
+# METADADES DE L'ONTOLOGIA
+############################
+
+<https://pae1.upc.edu/raccmobilityontology> a owl:Ontology ;
+  dc:title "RACC Mobility Ontology"@en ;
+  dc:title "Ontologia de Mobilitat RACC"@ca ;
+  dc:description "Ontology for modeling traffic incidents, road segments, and mobility events based on RACC data"@en ;
+  dc:description "Ontologia per modelar incidents de trànsit, segments de carretera i esdeveniments de mobilitat basada en dades del RACC"@ca ;
+  dc:creator "PAE Project Team, UPC"@en ;
+  dc:contributor "RACC - Reial Automòbil Club de Catalunya"@ca ;
+  dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+  dcterms:created "2026-01-18"^^xsd:date ;
+  dcterms:modified "2026-01-18"^^xsd:date ;
+  owl:versionInfo "1.0" ;
+  owl:versionIRI <https://pae1.upc.edu/raccmobilityontology/1.0> ;
+  rdfs:comment "This ontology extends SOSA/SSN for traffic incident observations and integrates GeoSPARQL for spatial data and QUDT for measurements"@en ;
+  rdfs:seeAlso <https://www.w3.org/ns/sosa/> ;
+  rdfs:seeAlso <http://www.opengis.net/ont/geosparql> .
+
+############################
+# CLASSES PRINCIPALS
+############################
+
+racc:TrafficIncident a owl:Class ;
+  rdfs:label "Traffic incident"@en ;
+  rdfs:label "Incident de trànsit"@ca ;
+  rdfs:comment "A traffic incident observation including accidents, delays, roadworks, and breakdowns"@en ;
+  rdfs:comment "Una observació d'incident de trànsit incloent accidents, retencions, obres i avaries"@ca ;
+  rdfs:subClassOf sosa:Observation .
+
+racc:Road a owl:Class ;
+  rdfs:label "Road"@en ;
+  rdfs:label "Carretera"@ca ;
+  rdfs:comment "A transportation road or highway"@en ;
+  rdfs:comment "Una carretera o via de transport"@ca ;
+  rdfs:subClassOf geo:Feature .
+
+racc:RoadSegment a owl:Class ;
+  rdfs:label "Road segment"@en ;
+  rdfs:label "Segment de carretera"@ca ;
+  rdfs:comment "A specific segment or section of a road"@en ;
+  rdfs:comment "Un segment o secció específica d'una carretera"@ca ;
+  rdfs:subClassOf racc:Road .
+
+racc:Area a owl:Class ;
+  rdfs:label "Area or locality"@en ;
+  rdfs:label "Àrea o localitat"@ca ;
+  rdfs:comment "A geographic area, municipality, or locality"@en ;
+  rdfs:comment "Una àrea geogràfica, municipi o localitat"@ca ;
+  rdfs:subClassOf geo:Feature .
+
+racc:Direction a owl:Class ;
+  rdfs:label "Traffic direction"@en ;
+  rdfs:label "Sentit del trànsit"@ca ;
+  rdfs:comment "The direction of traffic flow on a road"@en ;
+  rdfs:comment "El sentit de circulació del trànsit en una carretera"@ca .
+
+racc:IncidentType a owl:Class ;
+  rdfs:label "Incident type"@en ;
+  rdfs:label "Tipus d'incident"@ca ;
+  rdfs:comment "Classification of the type of traffic incident"@en ;
+  rdfs:comment "Classificació del tipus d'incident de trànsit"@ca .
+
+racc:SeverityLevel a owl:Class ;
+  rdfs:label "Severity level"@en ;
+  rdfs:label "Nivell de severitat"@ca ;
+  rdfs:comment "The severity or impact level of a traffic incident"@en ;
+  rdfs:comment "El nivell de severitat o impacte d'un incident de trànsit"@ca .
+
+racc:IncidentStatus a owl:Class ;
+  rdfs:label "Incident status"@en ;
+  rdfs:label "Estat de l'incident"@ca ;
+  rdfs:comment "Current status of the traffic incident"@en ;
+  rdfs:comment "Estat actual de l'incident de trànsit"@ca .
+
+racc:DataSource a owl:Class ;
+  rdfs:label "Data source"@en ;
+  rdfs:label "Font de dades"@ca ;
+  rdfs:comment "Source or sensor that provided the incident information"@en ;
+  rdfs:comment "Font o sensor que ha proporcionat la informació de l'incident"@ca ;
+  rdfs:subClassOf sosa:Sensor .
+
+racc:WeatherCondition a owl:Class ;
+  rdfs:label "Weather condition"@en ;
+  rdfs:label "Condició meteorològica"@ca ;
+  rdfs:comment "Weather conditions at the time of the incident"@en ;
+  rdfs:comment "Condicions meteorològiques al moment de l'incident"@ca .
+
+racc:LaneConfiguration a owl:Class ;
+  rdfs:label "Lane configuration"@en ;
+  rdfs:label "Configuració de carrils"@ca ;
+  rdfs:comment "Information about lane status and availability"@en ;
+  rdfs:comment "Informació sobre l'estat i disponibilitat dels carrils"@ca .
+
+############################
+# JERARQUIES DE CLASSES
+############################
+
+# Jerarquia de tipus de carreteres
+racc:Autopista a owl:Class ;
+  rdfs:label "Autopista"@ca ;
+  rdfs:label "Highway"@en ;
+  rdfs:comment "High-capacity divided highway with controlled access"@en ;
+  rdfs:subClassOf racc:Road .
+
+racc:Autovia a owl:Class ;
+  rdfs:label "Autovia"@ca ;
+  rdfs:label "Expressway"@en ;
+  rdfs:comment "Dual carriageway with some access control"@en ;
+  rdfs:subClassOf racc:Road .
+
+racc:CarreteraConvencional a owl:Class ;
+  rdfs:label "Carretera convencional"@ca ;
+  rdfs:label "Conventional road"@en ;
+  rdfs:comment "Standard two-lane road"@en ;
+  rdfs:subClassOf racc:Road .
+
+# Jerarquia de tipus d'accidents
+racc:AccidentMortal a owl:Class ;
+  rdfs:label "Accident mortal"@ca ;
+  rdfs:label "Fatal accident"@en ;
+  rdfs:comment "Accident resulting in one or more fatalities"@en ;
+  rdfs:subClassOf racc:Accident .
+
+racc:AccidentGreu a owl:Class ;
+  rdfs:label "Accident greu"@ca ;
+  rdfs:label "Serious accident"@en ;
+  rdfs:comment "Accident with serious injuries"@en ;
+  rdfs:subClassOf racc:Accident .
+
+racc:AccidentLleu a owl:Class ;
+  rdfs:label "Accident lleu"@ca ;
+  rdfs:label "Minor accident"@en ;
+  rdfs:comment "Accident with minor or no injuries"@en ;
+  rdfs:subClassOf racc:Accident .
+
+############################
+# CLASSES DISJUNTES
+############################
+
+# Tipus d'incidents són mútuament excloents
+[] a owl:AllDisjointClasses ;
+  owl:members ( racc:Accident racc:Retencio racc:Avaria racc:Obres 
+                racc:Meteorologia racc:Animal racc:Objecte racc:Manifestacio ) .
+
+# Estats d'incidents són mútuament excloents
+[] a owl:AllDisjointClasses ;
+  owl:members ( racc:Active racc:Resolved racc:InProgress racc:Verified ) .
+
+# Nivells de severitat són mútuament excloents
+[] a owl:AllDisjointClasses ;
+  owl:members ( racc:Severity1 racc:Severity2 racc:Severity3 racc:Severity4 racc:Severity5 ) .
+
+# Condicions meteorològiques són mútuament excloents
+[] a owl:AllDisjointClasses ;
+  owl:members ( racc:Clear racc:Rain racc:Snow racc:Fog racc:Ice racc:Wind ) .
+
+############################
+# INSTÀNCIES DE VOCABULARIS
+############################
+
+# Tipus d’incidència bàsics
+racc:Accident a racc:IncidentType ;
+  rdfs:label "accident"@ca ;
+  rdfs:label "accident"@en ;
+  rdfs:comment "Vehicle collision or crash"@en .
+
+racc:Retencio a racc:IncidentType ;
+  rdfs:label "retenció"@ca ;
+  rdfs:label "traffic jam"@en ;
+  rdfs:comment "Traffic congestion or delay"@en .
+
+racc:Avaria a racc:IncidentType ;
+  rdfs:label "avaria"@ca ;
+  rdfs:label "breakdown"@en ;
+  rdfs:comment "Vehicle breakdown or mechanical failure"@en .
+
+racc:Obres a racc:IncidentType ;
+  rdfs:label "obres"@ca ;
+  rdfs:label "roadworks"@en ;
+  rdfs:comment "Road construction or maintenance work"@en .
+
+racc:Meteorologia a racc:IncidentType ;
+  rdfs:label "meteorologia"@ca ;
+  rdfs:label "weather"@en ;
+  rdfs:comment "Weather-related traffic incident"@en .
+
+racc:Animal a racc:IncidentType ;
+  rdfs:label "animal"@ca ;
+  rdfs:label "animal"@en ;
+  rdfs:comment "Animal on the road"@en .
+
+racc:Objecte a racc:IncidentType ;
+  rdfs:label "objecte"@ca ;
+  rdfs:label "object"@en ;
+  rdfs:comment "Object or debris on the road"@en .
+
+racc:Manifestacio a racc:IncidentType ;
+  rdfs:label "manifestació"@ca ;
+  rdfs:label "demonstration"@en ;
+  rdfs:comment "Public demonstration or protest affecting traffic"@en .
+
+# Direccions de trànsit
+racc:Nord a racc:Direction ;
+  rdfs:label "nord"@ca ;
+  rdfs:label "north"@en .
+
+racc:Sud a racc:Direction ;
+  rdfs:label "sud"@ca ;
+  rdfs:label "south"@en .
+
+racc:Est a racc:Direction ;
+  rdfs:label "est"@ca ;
+  rdfs:label "east"@en .
+
+racc:Oest a racc:Direction ;
+  rdfs:label "oest"@ca ;
+  rdfs:label "west"@en .
+
+racc:Ascendent a racc:Direction ;
+  rdfs:label "ascendent"@ca ;
+  rdfs:label "ascending"@en ;
+  rdfs:comment "Increasing kilometer direction"@en .
+
+racc:Descendent a racc:Direction ;
+  rdfs:label "descendent"@ca ;
+  rdfs:label "descending"@en ;
+  rdfs:comment "Decreasing kilometer direction"@en .
+
+racc:Ambdos a racc:Direction ;
+  rdfs:label "ambdós sentits"@ca ;
+  rdfs:label "both directions"@en .
+
+# Estats de l'incident
+racc:Active a racc:IncidentStatus ;
+  rdfs:label "actiu"@ca ;
+  rdfs:label "active"@en ;
+  rdfs:comment "Incident is currently active"@en .
+
+racc:Resolved a racc:IncidentStatus ;
+  rdfs:label "resolt"@ca ;
+  rdfs:label "resolved"@en ;
+  rdfs:comment "Incident has been resolved"@en .
+
+racc:InProgress a racc:IncidentStatus ;
+  rdfs:label "en progrés"@ca ;
+  rdfs:label "in progress"@en ;
+  rdfs:comment "Incident resolution is in progress"@en .
+
+racc:Verified a racc:IncidentStatus ;
+  rdfs:label "verificat"@ca ;
+  rdfs:label "verified"@en ;
+  rdfs:comment "Incident has been verified"@en .
+
+# Fonts de dades
+racc:AutomaticSensor a racc:DataSource ;
+  rdfs:label "sensor automàtic"@ca ;
+  rdfs:label "automatic sensor"@en ;
+  rdfs:comment "Automatic traffic detection sensor"@en .
+
+racc:ManualReport a racc:DataSource ;
+  rdfs:label "informe manual"@ca ;
+  rdfs:label "manual report"@en ;
+racc:hasStatus a owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:IncidentStatus ;
+  rdfs:label "has status"@en ;
+  rdfs:label "té estat"@ca ;
+  rdfs:comment "Current status of the incident"@en .
+
+racc:hasDataSource a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:DataSource ;
+  rdfs:label "has data source"@en ;
+  rdfs:label "té font de dades"@ca ;
+  rdfs:comment "The source that provided the incident information"@en ;
+  rdfs:subPropertyOf sosa:madeBySensor .
+
+racc:hasWeatherCondition a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:WeatherCondition ;
+  rdfs:label "has weather condition"@en ;
+  rdfs:label "té condició meteorològica"@ca ;
+  rdfs:comment "Weather conditions at the time of the incident"@en .
+
+racc:hasLaneConfiguration a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:LaneConfiguration ;
+  rdfs:label "has lane configuration"@en ;
+  rdfs:label "té configuració de carrils"@ca ;
+  rdfs:comment "Information about affected lanes"@en .
+
+racc:hasDuration a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  time:Duration ;
+  rdfs:label "has duration"@en ;
+  rdfs:label "té durada"@ca ;
+  rdfs:comment "Duration of the incident"@en .
+
+# Propietats inverses
+racc:hasIncident a owl:ObjectProperty ;
+  rdfs:domain racc:RoadSegment ;
+  rdfs:range  racc:TrafficIncident ;
+  rdfs:label "has incident"@en ;
+  rdfs:label "té incident"@ca ;
+  rdfs:comment "Relates a road segment to incidents that occurred on it"@en ;
+  owl:inverseOf racc:hasRoadSegment .
+
+  rdfs:comment "Manually reported by traffic operator"@en .
+
+racc:CitizenReport a racc:DataSource ;
+  rdfs:label "informe ciutadà"@ca ;
+  rdfs:label "citizen report"@en ;
+  rdfs:comment "Reported by citizen or driver"@en .
+
+racc:Camera a racc:DataSource ;
+  rdfs:label "càmera"@ca ;
+  rdfs:label "camera"@en ;
+  rdfs:comment "Traffic monitoring camera"@en .;
+  owl:inverseOf racc:hasIncident 
+
+# Condicions meteorològiques
+racc:Clear a racc:WeatherCondition ;
+  rdfs:label "clar"@ca ;
+  rdfs:label "clear"@en .
+
+racc:Rain a racc:WeatherCondition ;
+  rdfs:label "pluja"@ca ;
+  rdfs:label "rain"@en .
+
+racc:Snow a racc:WeatherCondition ;
+  rdfs:label "neu"@ca ;
+  rdfs:label "snow"@en .
+
+racc:Fog a racc:WeatherCondition ;, owl:FunctionalProperty 
+  rdfs:label "boira"@ca ;
+  rdfs:label "fog"@en .
+
+racc:Ice a racc:WeatherCondition ;
+  rdfs:label "gel"@ca ;
+  rdfs:label "ice"@en .
+
+racc:Wind a racc:WeatherCondition ;
+  rdfs:label "vent"@ca ;
+  rdfs:label "wind"@en .
+
+# Nivells de severitat (escala 1–5)
+racc:Severity1 a racc:SeverityLevel ;
+  rdfs:label "nivell 1 (lleu)"@ca ;
+  rdfs:label "level 1 (minor)"@en ;
+  rdfs:comment "Minor impact on traffic flow"@en .
+
+racc:Severity2 a racc:SeverityLevel ;
+  rdfs:label "nivell 2"@ca ;
+  rdfs:label "level 2"@en ;
+  rdfs:comment "Low impact on traffic flow"@en .
+
+racc:Severity3 a racc:SeverityLevel ;
+  rdfs:label "nivell 3"@ca ;
+  rdfs:label "level 3"@en ;
+  rdfs:comment "Moderate impact on traffic flow"@en .
+
+racc:Severity4 a racc:SeverityLevel ;
+  rdfs:label "nivell 4"@ca ;
+  rdfs:label "level 4"@en ;
+  rdfs:comment "High impact on traffic flow"@en .
+
+racc:Severity5 a racc:SeverityLevel ;
+  rdfs:label "nivell 5 (molt greu)"@ca ;
+  rdfs:label "level 5 (critical)"@en ;
+  rdfs:comment "Critical impact on traffic flow, severe incident"@en .
+
+############################
+# PROPIETATS D’OBJECTE
+############################
+
+racc:hasRoadSegment a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:RoadSegment ;
+  rdfs:label "has road segment"@en ;
+  rdfs:label "té segment de carretera"@ca ;
+  rdfs:comment "Relates a traffic incident to the road segment where it occurred"@en ;
+  rdfs:subPropertyOf sosa:hasFeatureOfInterest .
+
+racc:hasArea a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:Area ;
+  rdfs:label "has area"@en ;
+  rdfs:label "té àrea"@ca ;
+  rdfs:comment "Relates a traffic incident to the geographic area or municipality"@en .
+
+racc:hasDirection a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:Direction ;
+  rdfs:label "has direction"@en ;
+  rdfs:label "té direcció"@ca ;
+  rdfs:comment "Indicates the traffic direction where the incident occurred"@en .
+
+racc:hasIncidentType a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:IncidentType ;
+  rdfs:label "has incident type"@en ;
+  rdfs:label "té tipus d'incident"@ca ;
+  rdfs:comment "Classifies the type of traffic incident"@en .
+, owl:FunctionalProperty 
+racc:hasSeverity a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  racc:SeverityLevel ;
+  rdfs:label "has severity level"@en ;
+  rdfs:label "té nivell de severitat"@ca ;
+  rdfs:comment "Indicates the severity or impact level of the incident"@en .
+
+racc:hasQueueLength a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  qudt:QuantityValue ;
+  rdfs:label "has queue length"@en ;
+  rdfs:label "té longitud de cua"@ca ;
+  rdfs:comment "The measured length of the traffic queue caused by the incident"@en .
+
+racc:hasLocation a owl:ObjectProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range  geo:Geometry ;
+  rdfs:label "has location"@en ;
+  rdfs:label "té ubicació"@ca ;
+  rdfs:comment "The geographic location of the incident using GeoSPARQL geometry"@en ;
+  rdfs:subPropertyOf geo:hasGeometry .
+
+############################
+# PROPIETATS DE DADES
+############################
+
+racc:roadName a owl:DatatypeProperty ;
+  rdfs:domain racc:RoadSegment ;
+  rdfs:range xsd:string ;
+  rdfs:label "road name"@en ;
+racc:kmStart a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:decimal ;
+  rdfs:label "kilometer start"@en ;
+  rdfs:label "quilòmetre inicial"@ca ;
+  rdREQUERIT: sosa:phenomenonTime per al temps de l'incident (cardinality 1)
+# - RECOMANAT: sosa:hasFeatureOfInterest o racc:hasRoadSegment per a la característica observada
+# - OPCIONAL: sosa:madeBySensor o racc:hasDataSource si hi ha sensors implicats
+# - OPCIONAL: sosa:observedProperty per especificar què s'observa (traffic flow, queue length, etc.)
+# - OPCIONAL: sosa:usedProcedure per descriure el mètode de detecció
+
+# GeoSPARQL: racc:Road i racc:Area són geo:Feature
+# - RECOMANAT: geo:hasGeometry o racc:hasLocation per a geometries espacials
+# - RECOMANAT: geo:asWKT per a representacions WKT de punts, línies o polígons
+# - EXEMPLE WKT punt: "POINT(2.1686 41.3874)"^^geo:wktLiteral
+# - EXEMPLE WKT línia: "LINESTRING(2.1 41.3, 2.2 41.4)"^^geo:wktLiteral
+
+# QUDT: Mesures quantitatives amb unitats
+# - racc:hasQueueLength vincula amb qudt:QuantityValue
+# - La QuantityValue ha de tenir:
+#   * qudt:numericValue (valor numèric)
+#   * qudt:unit (unitat, ex: unit:KiloM)
+#   * qudt:hasQuantityKind (tipus de quantitat, ex: quantitykind:Length)
+
+# Time Ontology: Instants i durades temporals
+# - sosa:phenomenonTime rdfs:range time:TemporalEntity
+# - Utilitzar time:Instant per a moments puntuals
+# - Utilitzar time:Interval per a períodes temporals
+# - Utilitzar time:Duration per a durades amb racc:hasDuration
+# - time:inXSDDateTimeStamp per convertir a xsd:dateTimeStamp
+
+############################
+# NOTES D'ÚS
+############################
+
+# Propietats SOSA estàndard a utilitzar directament:
+# - sosa:phenomenonTime → Temps de l'observació (REQUERIT)
+# - sosa:resultTime → Temps del registre de dades
+# - sosa:hasFeatureOfInterest → Entitat observada (carretera, segment)
+# - sosa:madeBySensor → Sensor o font de dades
+# - sosa:observedProperty → Propietat observada
+# - sosa:hasResult → Resultat de l'observació
+
+# Integració amb racc:hasDataSource:
+# - racc:hasDataSource és subpropiedad de sosa:madeBySensor
+# - Utilitzar racc:DataSource (subclasse de sosa:Sensor) per fonts específiques RACC
+
+# Cardinalitats i Restriccions:
+# - racc:hasIncidentType: exactament 1 (owl:cardinality 1)
+# - racc:hasSeverity: màxim 1 (owl:maxCardinality 1)
+# - racc:hasRoadSegment: almenys 1 (owl:minCardinality 1)
+# - sosa:phenomenonTime: exactament 1 (owl:cardinality 1)
+  rdfs:comment "GPS latitude coordinate of the incident"@en .
+
+racc:longitude a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:decimal ;
+  rdfs:label "longitude"@en ;
+  rdfs:label "longitud"@ca ;
+  rdfs:comment "GPS longitude coordinate of the incident"@en .
+
+racc:affectedRadius a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:decimal ;
+  rdfs:label "affected radius"@en ;
+  rdfs:label "radi afectat"@ca ;
+  rdfs:comment "Radius of impact in kilometers"@en .
+
+racc:startTime a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:dateTime ;
+  rdfs:label "start time"@en ;
+  rdfs:label "hora d'inici"@ca ;
+  rdfs:comment "Date and time when the incident started"@en .
+
+racc:endTime a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:dateTime ;
+  rdfs:label "end time"@en ;
+  rdfs:label "hora de fi"@ca ;
+  rdfs:comment "Date and time when the incident ended"@en .
+
+racc:resolutionTime a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:duration ;
+  rdfs:label "resolution time"@en ;
+  rdfs:label "temps de resolució"@ca ;
+  rdfs:comment "Time taken to resolve the incident"@en .
+
+racc:numberOfVehicles a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:label "number of vehicles"@en ;
+  rdfs:label "nombre de vehicles"@ca ;
+  rdfs:comment "Number of vehicles involved in the incident"@en .
+
+racc:numberOfInjuries a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:label "number of injuries"@en ;
+  rdfs:label "nombre de ferits"@ca ;
+  rdfs:comment "Number of people injured in the incident"@en .
+
+racc:numberOfFatalities a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:label "number of fatalities"@en ;
+  rdfs:label "nombre de víctimes mortals"@ca ;
+  rdfs:comment "Number of fatalities in the incident"@en .
+
+racc:totalLanes a owl:DatatypeProperty ;
+  rdfs:domain racc:LaneConfiguration ;
+  rdfs:range xsd:positiveInteger ;
+  rdfs:label "total lanes"@en ;
+  rdfs:label "total de carrils"@ca ;
+  rdfs:comment "Total number of lanes on the road"@en .
+
+racc:affectedLanes a owl:DatatypeProperty ;
+  rdfs:domain racc:LaneConfiguration ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:label "affected lanes"@en ;
+  rdfs:label "carrils afectats"@ca ;
+  rdfs:comment "Number of lanes affected by the incident"@en .
+
+racc:closedLanes a owl:DatatypeProperty ;
+  rdfs:domain racc:LaneConfiguration ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:label "closed lanes"@en ;
+  rdfs:label "carrils tancats"@ca ;
+  rdfs:comment "Number of lanes completely closed"@en .
+
+racc:availableLanes a owl:DatatypeProperty ;
+  rdfs:domain racc:LaneConfiguration ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:label "available lanes"@en ;
+  rdfs:label "carrils disponibles"@ca ;
+  rdfs:comment "Number of lanes still available for traffic"@en .
+
+# Propietat espacial per relacionar segments amb àrees
+racc:locatedIn a owl:ObjectProperty , owl:TransitiveProperty ;
+  rdfs:domain racc:RoadSegment ;
+  rdfs:range racc:Area ;
+  rdfs:label "located in"@en ;
+  rdfs:label "ubicat a"@ca ;
+  rdfs:comment "Indicates the geographic area where a road segment is located"@en .
+
+############################
+# RESTRICCIONS OWL
+############################
+
+# Cardinalitats bàsiques
+racc:TrafficIncident rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty racc:hasIncidentType ;
+  owl:cardinality 1
+] .
+
+racc:TrafficIncident rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty racc:hasSeverity ;
+  owl:maxCardinality 1
+] .
+
+racc:TrafficIncident rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty racc:hasRoadSegment ;
+  owl:minCardinality 1
+] .
+
+racc:TrafficIncident rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty sosa:phenomenonTime ;
+  owl:cardinality 1
+] .
+
+# Restriccions qualificades
+racc:TrafficIncident rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty racc:hasStatus ;
+  owl:someValuesFrom racc:IncidentStatus
+] .
+
+racc:AccidentMortal rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty racc:numberOfFatalities ;
+  owl:minCardinality 1
+] .
+
+racc:AccidentMortal rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty racc:numberOfFatalities ;
+  owl:someValuesFrom [
+    a rdfs:Datatype ;
+    owl:onDatatype xsd:nonNegativeInteger ;
+    owl:withRestrictions ( [ xsd:minInclusive 1 ] )
+  ]
+] .
+
+# Els AccidentGreu han de tenir injuries
+racc:AccidentGreu rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty racc:numberOfInjuries ;
+  owl:minCardinality 1
+] .
+
+# Configuració de carrils: els tancats no poden ser més que el total
+racc:LaneConfiguration rdfs:subClassOf [
+  a owl:Restriction ;
+  owl:onProperty racc:totalLanes ;
+  owl:cardinality 1
+] .
+
+# Property chains: si un incident està en un segment i el segment està en una àrea, 
+# llavors l'incident està en aquesta àrea
+racc:hasArea owl:propertyChainAxiom ( racc:hasRoadSegment racc:locatedIn ) .
+
+# Enumeracions de valors possibles per severitat
+racc:SeverityLevel owl:equivalentClass [
+  a owl:Class ;
+  owl:oneOf ( racc:Severity1 racc:Severity2 racc:Severity3 racc:Severity4 racc:Severity5 )
+] .
+
+# Enumeracions de direccions cardinales
+racc:CardinalDirection a owl:Class ;
+  rdfs:label "Cardinal direction"@en ;
+  rdfs:label "Direcció cardinal"@ca ;
+  owl:equivalentClass [
+    a owl:Class ;
+    owl:oneOf ( racc:Nord racc:Sud racc:Est racc:Oest )
+  ] ;
+  rdfs:subClassOf racc:Direction .
+
+  rdfs:label "nom de carretera"@ca ;
+  rdfs:comment "The official name or designation of the road"@en .
+
+racc:roadCode a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain racc:RoadSegment ;
+  rdfs:range xsd:string ;
+  rdfs:label "road code"@en ;
+  rdfs:label "codi de carretera"@ca ;
+  rdfs:comment "The official code or identifier of the road (e.g., C-58, AP-7)"@en .
+
+racc:directionLabel a owl:DatatypeProperty ;
+  rdfs:domain racc:Direction ;
+  rdfs:range xsd:string ;
+  rdfs:label "direction label"@en ;
+  rdfs:label "etiqueta de direcció"@ca ;
+  rdfs:comment "Text description of the traffic direction"@en .
+
+racc:areaName a owl:DatatypeProperty ;
+  rdfs:domain racc:Area ;
+  rdfs:range xsd:string ;
+  rdfs:label "area name"@en ;
+  rdfs:label "nom d'àrea"@ca ;
+  rdfs:comment "The name of the geographic area or municipality"@en .
+
+racc:additionalInfo a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:string ;
+  rdfs:label "additional information"@en ;
+  rdfs:label "informació addicional"@ca ;
+  rdfs:comment "Additional descriptive information about the incident"@en .
+
+racc:dayOfWeek a owl:DatatypeProperty ;
+  rdfs:domain racc:TrafficIncident ;
+  rdfs:range xsd:string ;
+  rdfs:label "day of week"@en ;
+  rdfs:label "dia de la setmana"@ca ;
+  rdfs:comment "The day of the week when the incident occurred"@en .
+
+racc:kilometerPoint a owl:DatatypeProperty ;
+  rdfs:domain racc:RoadSegment ;
+  rdfs:range xsd:decimal ;
+  rdfs:label "kilometer point"@en ;
+  rdfs:label "punt quilomètric"@ca ;
+  rdfs:comment "The kilometer point or marker on the road"@en .
+
+############################
+# VINCLES AMB ONTOLOGIES ESTÀNDARD
+############################
+
+# SOSA/SSN: racc:TrafficIncident és una observació
+# - Utilitzar sosa:phenomenonTime per al temps de l'incident
+# - Utilitzar sosa:hasFeatureOfInterest o racc:hasRoadSegment per a la característica observada
+# - Utilitzar sosa:madeBySensor si hi ha sensors implicats
+
+# GeoSPARQL: racc:Road i racc:Area són geo:Feature
+# - Utilitzar geo:hasGeometry per a geometries espacials
+# - Utilitzar geo:asWKT per a representacions WKT
+
+# QUDT: racc:hasQueueLength vincula amb qudt:QuantityValue
+# - La QuantityValue ha de tenir qudt:numericValue i qudt:unit
+# - Exemple: unit:KiloM per a quilòmetres
+
+# Time Ontology: Utilitzar time:Instant per a temps puntuals
+# - sosa:phenomenonTime rdfs:range time:TemporalEntity

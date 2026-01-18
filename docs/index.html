@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RACC Mobility Ontology</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #0066cc;
+            color: white;
+            padding: 30px;
+            margin: -20px -20px 30px -20px;
+            border-radius: 0 0 8px 8px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        main {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        .download-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .download-link {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 10px 10px 0;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .download-link:hover {
+            background-color: #0052a3;
+        }
+        .format-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #e9ecef;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
+            margin-left: 8px;
+        }
+        .metadata {
+            background: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #0066cc;
+            margin: 20px 0;
+        }
+        .metadata dt {
+            font-weight: bold;
+            color: #0066cc;
+            margin-top: 10px;
+        }
+        .metadata dd {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .namespace-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>RACC Mobility Ontology</h1>
+        <div class="subtitle">Ontologia de Mobilitat RACC</div>
+    </header>
+
+    <main>
+        <section>
+            <h2>Descripció</h2>
+            <p>
+                Aquesta ontologia modela incidents de trànsit, segments de carretera i esdeveniments de mobilitat 
+                basada en dades del RACC (Reial Automòbil Club de Catalunya).
+            </p>
+            <p>
+                L'ontologia estén <strong>SOSA/SSN</strong> per a observacions d'incidents de trànsit i integra 
+                <strong>GeoSPARQL</strong> per a dades espacials i <strong>QUDT</strong> per a mesures.
+            </p>
+        </section>
+
+        <section>
+            <h2>Metadades</h2>
+            <dl class="metadata">
+                <dt>Títol:</dt>
+                <dd>RACC Mobility Ontology</dd>
+                
+                <dt>Versió:</dt>
+                <dd>1.0</dd>
+                
+                <dt>Data de creació:</dt>
+                <dd>18 de gener de 2026</dd>
+                
+                <dt>Creador:</dt>
+                <dd>PAE Project Team, UPC</dd>
+                
+                <dt>Contribuïdor:</dt>
+                <dd>RACC - Reial Automòbil Club de Catalunya</dd>
+                
+                <dt>Llicència:</dt>
+                <dd><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a></dd>
+            </dl>
+        </section>
+
+        <section>
+            <h2>Namespace</h2>
+            <div class="namespace-box">
+                https://pae1.upc.edu/raccmobilityontology#
+            </div>
+        </section>
+
+        <section>
+            <h2>Descàrregues</h2>
+            <div class="download-section">
+                <p><strong>Formats disponibles:</strong></p>
+                
+                <a href="raccmobilityontology.ttl" class="download-link" download>
+                    📥 Descarregar Turtle
+                    <span class="format-badge">.ttl</span>
+                </a>
+                
+                <a href="racc-context.jsonld" class="download-link" download>
+                    📥 Descarregar JSON-LD Context
+                    <span class="format-badge">.jsonld</span>
+                </a>
+
+                <p style="margin-top: 20px; font-size: 0.9em;">
+                    <strong>Nota:</strong> El fitxer <code>raccmobilityontology.ttl</code> conté l'ontologia completa 
+                    en format Turtle (RDF). El fitxer <code>racc-context.jsonld</code> conté el context JSON-LD 
+                    per facilitar la integració amb aplicacions basades en JSON.
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Ús amb JSON-LD</h2>
+            <p>Per utilitzar el context JSON-LD en els teus documents, afegeix aquesta referència:</p>
+            <pre style="background: #f4f4f4; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>{
+  "@context": "https://&lt;el-teu-usuari&gt;.github.io/&lt;el-teu-repo&gt;/racc-context.jsonld",
+  ...
+}</code></pre>
+        </section>
+
+        <section>
+            <h2>Classes principals</h2>
+            <ul>
+                <li><code>racc:TrafficIncident</code> - Incident de trànsit (accidents, retencions, obres, avaries)</li>
+                <li><code>racc:Road</code> - Carretera o via de transport</li>
+                <li><code>racc:RoadSegment</code> - Segment específic d'una carretera</li>
+                <li><code>racc:Municipality</code> - Municipi o àrea administrativa</li>
+                <li><code>racc:Province</code> - Província</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Ontologies relacionades</h2>
+            <ul>
+                <li><a href="https://www.w3.org/ns/sosa/" target="_blank">SOSA/SSN</a> - Sensor, Observation, Sample, and Actuator ontology</li>
+                <li><a href="http://www.opengis.net/ont/geosparql" target="_blank">GeoSPARQL</a> - Geographic data representation</li>
+                <li><a href="http://qudt.org/schema/qudt/" target="_blank">QUDT</a> - Quantities, Units, Dimensions and Data Types</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Repositori</h2>
+            <p>
+                Aquesta ontologia forma part del projecte PAE de la UPC. 
+                Per més informació, consulta el repositori del projecte.
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 PAE Project Team, UPC | RACC Mobility Ontology v1.0</p>
+        <p>Llicència: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">Creative Commons BY 4.0</a></p>
+    </footer>
+</body>
+</html>
