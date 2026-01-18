@@ -1,0 +1,53 @@
+{
+  "@context": "racc-context.jsonld",
+  "@graph": [
+    {
+      "@id": "https://pae1.upc.edu/racc/incident/2019-02-13-C58-Terrassa",
+      "@type": "racc:TrafficIncident",
+      "racc:dayOfWeek": "Dimecres",
+      "racc:hasIncidentType": { "@id": "racc:Accident" },
+      "racc:hasSeverity": { "@id": "racc:Severity3" },
+      "racc:additionalInfo": "6 km de cua.",
+      "racc:hasRoadSegment": {
+        "@id": "https://pae1.upc.edu/racc/roadsegment/C58-Terrassa"
+      },
+      "racc:hasArea": {
+        "@id": "https://pae1.upc.edu/racc/area/Terrassa"
+      },
+      "racc:hasDirection": {
+        "@id": "https://pae1.upc.edu/racc/direction/No-especificat"
+      },
+      "racc:hasQueueLength": {
+        "@id": "https://pae1.upc.edu/racc/result/queue-length-2019-02-13-C58",
+        "@type": "qudt:QuantityValue",
+        "qudt:hasUnit": { "@id": "unit:KiloM" },
+        "qudt:numericValue": 6.0,
+        "qudt:hasQuantityKind": { "@id": "quantitykind:Length" }
+      },
+      "sosa:phenomenonTime": {
+        "@id": "https://pae1.upc.edu/racc/time/2019-02-13-C58",
+        "@type": "time:Instant",
+        "time:inXSDDateTimeStamp": {
+          "@type": "xsd:dateTimeStamp",
+          "@value": "2019-02-13T00:00:00Z"
+        }
+      }
+    },
+    {
+      "@id": "https://pae1.upc.edu/racc/roadsegment/C58-Terrassa",
+      "@type": "racc:RoadSegment",
+      "racc:roadName": "C-58",
+      "racc:roadCode": "C-58"
+    },
+    {
+      "@id": "https://pae1.upc.edu/racc/area/Terrassa",
+      "@type": "racc:Area",
+      "racc:areaName": "Terrassa"
+    },
+    {
+      "@id": "https://pae1.upc.edu/racc/direction/No-especificat",
+      "@type": "racc:Direction",
+      "racc:directionLabel": "No especificat"
+    }
+  ]
+}
