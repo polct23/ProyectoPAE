@@ -190,30 +190,43 @@ const Configuracio: React.FC = () => {
 
   return (
     <div className="page-configuracio">
-      <h2>Configuració</h2>
+      <h2>Configuració del Sistema</h2>
 
       <section className="cfg-row">
-        {/* Solo visible para admin */}
-        {user === 'admin' && (
-          <div style={{ margin: '16px 0' }}>
-            <label>
-              Subir informe semanal (CSV):
-              <input type="file" accept=".csv" onChange={handleCSVUpload} disabled={csvUploading} />
-            </label>
-          </div>
-        )}
         <div className="cfg-column">
+          {/* CSV Upload section - only for admin */}
+          {user === 'admin' && (
+            <div className="csv-upload-section">
+              <label>
+                <div className="csv-upload-icon">📤</div>
+                <div className="csv-upload-text">Importar Informe Semanal</div>
+                <div className="csv-upload-subtext">Subeix un fitxer CSV amb les dades de l'informe</div>
+                <input 
+                  type="file" 
+                  accept=".csv" 
+                  onChange={handleCSVUpload} 
+                  disabled={csvUploading}
+                  style={{ marginTop: 8 }}
+                />
+                {csvUploading && <span className="loading-spinner">⏳ Pujant...</span>}
+              </label>
+            </div>
+          )}
+
+          {/* Configuration section */}
+          <h3>Configuració General</h3>
           <label className="cfg-label">
-            API base URL
+            <span>🌐 API Base URL</span>
             <input
               type="text"
               value={config.apiUrl}
               onChange={(e) => setConfig(prev => ({ ...prev, apiUrl: e.target.value }))}
+              placeholder="http://localhost:8000"
             />
           </label>
 
           <label className="cfg-label">
-            Port Frontend
+            <span>🚀 Port Frontend</span>
             <input
               type="number"
               value={config.portFront}
@@ -221,122 +234,200 @@ const Configuracio: React.FC = () => {
             />
           </label>
 
+          {/* Datasets section */}
           <div className="datasets-fieldset">
             <strong>Datasets disponibles</strong>
-            {loading && <div>Carregant...</div>}
-            {error && <div style={{ color: 'red' }}>{error}</div>}
+            
+            {loading && <div style={{ textAlign: 'center', color: '#666', padding: '16px' }}>
+              <span className="loading-spinner">⏳</span> Carregant datasets...
+            </div>}
+            
+            {error && <div className="error-message">{error}</div>}
 
-            <div style={{ margin: '8px 0' }}>
-              {user && (
-                <>
-                  <button onClick={startNew} style={{ marginRight: 8 }}>+ Nou dataset</button>
-                  {editing && <button onClick={cancelEdit} className="btn-ghost">Cancel·lar</button>}
-                </>
-              )}
-            </div>
+            {user && (
+              <div className="datasets-header-actions">
+                <button onClick={startNew} className="btn-add">+ Afegir Dataset</button>
+                {editing && <button onClick={cancelEdit} className="btn-ghost">Cancelar</button>}
+              </div>
+            )}
 
             <div className="datasets-list">
-              {datasets.map(ds => (
-                <label key={String(ds.id)} className="dataset-item" style={{ alignItems: 'center' }}>
-                  <input
-                    type="checkbox"
-                    checked={config.selectedDatasetIds.includes(ds.id)}
-                    onChange={() => toggleDataset(ds.id)}
-                    style={{ marginRight: 8 }}
-                  />
-                  {ds.logo && (
-                    <img
-                      src={ds.logo}
-                      alt={`${ds.title ?? ds.name ?? ds.id} logo`}
-                      className="dataset-thumb"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              {datasets.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                  No hi ha datasets disponibles
+                </div>
+              ) : (
+                datasets.map(ds => (
+                  <label key={String(ds.id)} className="dataset-item">
+                    <input
+                      type="checkbox"
+                      checked={config.selectedDatasetIds.includes(ds.id)}
+                      onChange={() => toggleDataset(ds.id)}
                     />
-                  )}
-                  <div className="dataset-meta" style={{ flex: 1 }}>
-                    <div className="dataset-title">{ds.title ?? ds.name ?? String(ds.id)}</div>
-                    {ds.description && <div className="dataset-desc">{ds.description}</div>}
-                  </div>
-
-                  {user && (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => startEdit(ds)}>Editar</button>
-                      <button onClick={() => deleteDataset(ds)} className="btn-ghost">Eliminar</button>
+                    {ds.logo && (
+                      <img
+                        src={ds.logo}
+                        alt={`${ds.title ?? ds.name ?? ds.id} logo`}
+                        className="dataset-thumb"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <div className="dataset-meta">
+                      <div className="dataset-title">{ds.title ?? ds.name ?? String(ds.id)}</div>
+                      {ds.description && <div className="dataset-desc">{ds.description}</div>}
+                      {ds.category && <div style={{ fontSize: '12px', color: '#999' }}>📁 {ds.category}</div>}
                     </div>
-                  )}
-                </label>
-              ))}
+
+                    {user && (
+                      <div className="dataset-actions">
+                        <button onClick={() => startEdit(ds)} className="btn-edit">✏️ Editar</button>
+                        <button onClick={() => deleteDataset(ds)} className="btn-delete">🗑️ Eliminar</button>
+                      </div>
+                    )}
+                  </label>
+                ))
+              )}
             </div>
           </div>
 
+          {/* Edit form section */}
           {editing && (
-            <div style={{ marginTop: 12, borderTop: '1px solid #eee', paddingTop: 12 }}>
-              <h3>{datasets.some(d => Number(d.id) === Number(editing.id)) ? 'Editar dataset' : 'Nou dataset'}</h3>
-              <div style={{ display: 'grid', gap: 8 }}>
+            <div className="edit-form-section">
+              <h3>
+                {datasets.some(d => Number(d.id) === Number(editing.id)) 
+                  ? '✏️ Editar Dataset' 
+                  : '➕ Nou Dataset'}
+              </h3>
+              
+              {error && <div className="error-message">{error}</div>}
+
+              <div className="form-grid">
                 <label className="cfg-label">
-                  ID
-                  <input value={String(editing.id)} onChange={e => setEditing(prev => prev ? ({ ...prev, id: e.target.value }) : prev)} />
+                  ID del Dataset
+                  <input 
+                    value={String(editing.id)} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, id: e.target.value }) : prev)} 
+                    placeholder="ex: dataset-1"
+                  />
                 </label>
                 <label className="cfg-label">
-                  Title
-                  <input value={editing.title || ''} onChange={e => setEditing(prev => prev ? ({ ...prev, title: e.target.value }) : prev)} />
+                  Título
+                  <input 
+                    value={editing.title || ''} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, title: e.target.value }) : prev)} 
+                    placeholder="ex: SCT - Incidències vàries"
+                  />
+                </label>
+                <label className="cfg-label" style={{ gridColumn: '1 / -1' }}>
+                  Descripció
+                  <textarea 
+                    value={editing.description || ''} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, description: e.target.value }) : prev)}
+                    placeholder="Descripcio detallada del dataset"
+                    rows={3}
+                  />
                 </label>
                 <label className="cfg-label">
-                  Description
-                  <input value={editing.description || ''} onChange={e => setEditing(prev => prev ? ({ ...prev, description: e.target.value }) : prev)} />
+                  Categoria
+                  <input 
+                    value={editing.category || ''} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, category: e.target.value }) : prev)} 
+                    placeholder="ex: Incidencies"
+                  />
                 </label>
                 <label className="cfg-label">
                   Format
-                  <input value={editing.format || ''} onChange={e => setEditing(prev => prev ? ({ ...prev, format: e.target.value }) : prev)} />
+                  <input 
+                    value={editing.format || ''} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, format: e.target.value }) : prev)} 
+                    placeholder="ex: JSON, CSV"
+                  />
                 </label>
                 <label className="cfg-label">
-                  Last update
-                  <input value={editing.lastUpdate || ''} onChange={e => setEditing(prev => prev ? ({ ...prev, lastUpdate: e.target.value }) : prev)} />
+                  Última actualització
+                  <input 
+                    type="date"
+                    value={editing.lastUpdate || ''} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, lastUpdate: e.target.value }) : prev)}
+                  />
                 </label>
                 <label className="cfg-label">
-                  Category
-                  <input value={editing.category || ''} onChange={e => setEditing(prev => prev ? ({ ...prev, category: e.target.value }) : prev)} />
+                  Cobertura Geogràfica
+                  <input 
+                    value={editing.coverage || ''} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, coverage: e.target.value }) : prev)} 
+                    placeholder="ex: Catalunya"
+                  />
                 </label>
                 <label className="cfg-label">
-                  Coverage
-                  <input value={editing.coverage || ''} onChange={e => setEditing(prev => prev ? ({ ...prev, coverage: e.target.value }) : prev)} />
+                  Enllaç a la Font
+                  <input 
+                    type="url"
+                    value={editing.link || ''} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, link: e.target.value }) : prev)} 
+                    placeholder="https://..."
+                  />
                 </label>
                 <label className="cfg-label">
-                  Link
-                  <input value={editing.link || ''} onChange={e => setEditing(prev => prev ? ({ ...prev, link: e.target.value }) : prev)} />
+                  Logo URL
+                  <input 
+                    type="url"
+                    value={editing.logo || ''} 
+                    onChange={e => setEditing(prev => prev ? ({ ...prev, logo: e.target.value }) : prev)} 
+                    placeholder="https://..."
+                  />
                 </label>
-                <label className="cfg-label">
-                  Logo (URL)
-                  <input value={editing.logo || ''} onChange={e => setEditing(prev => prev ? ({ ...prev, logo: e.target.value }) : prev)} />
-                </label>
+              </div>
 
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={submitEdit} disabled={saving}>{saving ? 'Desant...' : 'Desar'}</button>
-                  <button className="btn-ghost" onClick={cancelEdit}>Cancel·lar</button>
-                </div>
+              <div className="cfg-actions">
+                <button onClick={submitEdit} disabled={saving}>
+                  {saving ? '💾 Desant...' : '💾 Desar Dataset'}
+                </button>
+                <button className="btn-ghost" onClick={cancelEdit}>Cancelar</button>
               </div>
             </div>
           )}
 
-          <div style={{ marginTop: 16 }}>
-            <div style={{ color: '#666', fontSize: 13 }}>Recorda: les operacions d'edició/recreació/eliminació requereixen sessió d'admin.</div>
+          <div className="muted" style={{ marginTop: 20, padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '6px' }}>
+            ℹ️ Nota: Les operacions d'edició, creació i eliminació requereixen autenticació d'administrador.
           </div>
         </div>
 
+        {/* Preview section */}
         <div className="cfg-column cfg-preview">
-          <h3>Previsualització</h3>
+          <h3>📊 Previsualització</h3>
           <div>
-            <div><strong>API:</strong> {config.apiUrl}</div>
-            <div><strong>Port Front:</strong> {config.portFront}</div>
-            <div><strong>Datasets seleccionats:</strong> {config.selectedDatasetIds.join(', ')}</div>
-            <div className="muted">Canvia la configuració i prem "Guardar" per fer-la efectiva (localStorage).</div>
+            <div style={{ marginBottom: '12px' }}>
+              <strong>API Base:</strong>
+              <div style={{ fontSize: '12px', wordBreak: 'break-all', marginTop: '4px' }}>{config.apiUrl}</div>
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <strong>Port Frontend:</strong>
+              <div style={{ fontSize: '12px', marginTop: '4px' }}>{config.portFront}</div>
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <strong>Datasets Seleccionats:</strong>
+              <div style={{ fontSize: '12px', marginTop: '4px' }}>
+                {config.selectedDatasetIds.length === 0 
+                  ? '(Cap dataset seleccionat)' 
+                  : config.selectedDatasetIds.join(', ')}
+              </div>
+            </div>
+            <div className="muted">
+              Modifica la configuració i fes clic a "Guardar" per aplicar els canvis (es guarden a localStorage).
+            </div>
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <div className="cfg-actions">
-              <button onClick={saveConfig}>Guardar</button>
-              <button className="btn-ghost" onClick={resetConfig}>Restablir</button>
-              <button onClick={previewDownload}>Descarregar config</button>
-            </div>
+          <div className="cfg-actions" style={{ marginTop: 20 }}>
+            <button onClick={saveConfig} style={{ background: '#4caf50', borderColor: '#4caf50', flex: 1 }}>
+              💾 Guardar
+            </button>
+            <button className="btn-ghost" onClick={resetConfig} style={{ flex: 1 }}>
+              🔄 Restablir
+            </button>
+            <button onClick={previewDownload} className="btn-secondary" style={{ flex: 1 }}>
+              📥 Descarregar
+            </button>
           </div>
         </div>
       </section>
