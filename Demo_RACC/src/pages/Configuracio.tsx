@@ -27,7 +27,7 @@ type ConfigState = {
 const STORAGE_KEY = 'racc_demo_config_v1';
 
 const defaultConfig: ConfigState = {
-  apiUrl: 'http://127.0.0.1:8000',
+  apiUrl: 'http://localhost:8000',
   portFront: 4001,
   selectedDatasetIds: [],
   showMapMarkers: true,
@@ -35,10 +35,11 @@ const defaultConfig: ConfigState = {
   refreshIntervalSec: 60,
 };
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+//const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE = "http://localhost:8000";
 
 const Configuracio: React.FC = () => {
-  const { user } = useAuth();
+  const { user, fetchWithAuth } = useAuth();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +56,27 @@ const Configuracio: React.FC = () => {
   const emptyForm: Dataset = { id: '', title: '', description: '', category: '', link: '', logo: null, format: '', lastUpdate: '', coverage: '' };
   const [editing, setEditing] = useState<Dataset | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // CSV upload state
+  const [csvUploading, setCsvUploading] = useState(false);
+
+  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    setCsvUploading(true);
+    const formData = new FormData();
+    formData.append('file', e.target.files[0]);
+    try {
+      const res = await fetchWithAuth('http://localhost:8000/api/informe/csv', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) window.alert('CSV subido correctamente');
+      else window.alert('Error al subir CSV');
+    } catch (err) {
+      window.alert('Error al subir CSV');
+    }
+    setCsvUploading(false);
+  };
 
   const fetchDatasets = async () => {
     setLoading(true);
@@ -171,6 +193,15 @@ const Configuracio: React.FC = () => {
       <h2>Configuració</h2>
 
       <section className="cfg-row">
+        {/* Solo visible para admin */}
+        {user === 'admin' && (
+          <div style={{ margin: '16px 0' }}>
+            <label>
+              Subir informe semanal (CSV):
+              <input type="file" accept=".csv" onChange={handleCSVUpload} disabled={csvUploading} />
+            </label>
+          </div>
+        )}
         <div className="cfg-column">
           <label className="cfg-label">
             API base URL

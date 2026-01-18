@@ -84,13 +84,7 @@ type TrafficMapProps = {
   routes?: Route[];
 };
 
-const defaultIncidents: TrafficIncident[] = [
-  { id: 1, lat: 41.3851, lng: 2.1734, type: 'retention', description: 'Retención en Diagonal' },
-  { id: 2, lat: 41.3879, lng: 2.1699, type: 'accident', description: 'Accidente en Passeig de Gràcia' },
-  { id: 3, lat: 41.3828, lng: 2.1769, type: 'closure', description: 'Calle cortada en Rambla Catalunya' },
-  { id: 4, lat: 41.3888, lng: 2.1590, type: 'retention', description: 'Tráfico lento en Gran Via' },
-  { id: 5, lat: 41.3947, lng: 2.1778, type: 'retention', description: 'Retención en Meridiana' },
-];
+
 
 const getIncidentColor = (type: string) => {
   switch (type) {
@@ -164,7 +158,7 @@ const TrafficMap: React.FC<TrafficMapProps> = ({ markers, height = '100%', route
           type: m.type ?? 'retention',
           description: m.label ?? 'Incidencia'
         }))
-      : defaultIncidents;
+      : [];
 
   // Aplicar filtros
   const items = rawItems.filter(inc => {
