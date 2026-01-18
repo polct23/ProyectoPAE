@@ -1068,6 +1068,56 @@ def incidents_map():
     except Exception as e:
         return {"error": str(e), "incidents": [], "total": 0}
 
+
+
+# ==================== INFORME SEMANAL (CSV) ====================
+from sqlmodel import Column, LargeBinary
+
+class InformeCSV(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
+    id: Optional[int] = Field(default=None, primary_key=True)
+    filename: str
+    content: bytes = Field(sa_column=Column(LargeBinary))
+    uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    uploaded_by: str
+
+# Endpoint para que el admin suba el CSV semanal
+@app.post("/api/informe/csv", status_code=201)
+def upload_informe_csv(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    if user.username != "admin":
+        raise HTTPException(status_code=403, detail="Solo el admin puede subir el informe semanal")
+    content = file.file.read()
+    informe = InformeCSV(
+        filename=file.filename,
+        content=content,
+        uploaded_by=user.username
+    )
+    session.add(informe)
+    session.commit()
+    session.refresh(informe)
+    return {"msg": "Informe subido", "id": informe.id, "filename": informe.filename}
+
+# Endpoint público para obtener los datos del último informe semanal
+import io
+@app.get("/api/informe/datos")
+def get_informe_datos(session: Session = Depends(get_session)):
+    informe = session.exec(select(InformeCSV).order_by(InformeCSV.uploaded_at.desc())).first()
+    if not informe:
+        return {"error": "No hay informe semanal disponible"}
+    # Leer CSV y devolver como lista de dicts
+    content = informe.content
+    try:
+        text = content.decode("utf-8")
+    except Exception:
+        text = content.decode("latin-1")
+    reader = csv.DictReader(io.StringIO(text))
+    rows = list(reader)
+    return {"filename": informe.filename, "uploaded_at": informe.uploaded_at, "rows": rows}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
